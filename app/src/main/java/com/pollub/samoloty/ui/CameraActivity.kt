@@ -175,7 +175,6 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
         super.onResume()
 
         showProgressIndicator(true)
-
         vuforiaAppSession!!.onResume()
     }
 
@@ -183,18 +182,16 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
     override fun onConfigurationChanged(config: Configuration) {
         Log.d(LOGTAG, "onConfigurationChanged")
         super.onConfigurationChanged(config)
-
         vuforiaAppSession!!.onConfigurationChanged()
     }
-
 
     override fun onPause() {
         Log.d(LOGTAG, "onPause")
         super.onPause()
 
-        if (mGlView != null) {
-            mGlView!!.visibility = View.INVISIBLE
-            mGlView!!.onPause()
+        mGlView?.run {
+            visibility = View.INVISIBLE
+            onPause()
         }
 
         // Turn off the flash
@@ -205,7 +202,6 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
 
         vuforiaAppSession!!.onPause()
     }
-
 
     override fun onDestroy() {
         Log.d(LOGTAG, "onDestroy")
@@ -233,16 +229,14 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
 
         mGlView = GLView(applicationContext)
         mGlView!!.init(translucent, depthSize, stencilSize)
-
         mRenderer = ModelRenderer(this, vuforiaAppSession)
-        //  mRenderer.setTextures(mTextures);
         mGlView!!.setRenderer(mRenderer)
         mGlView!!.preserveEGLContextOnPause = true
     }
 
     private fun loadData() {
 
-        val planes = Repository.invoke(this).getAll()
+        val planes = Repository.getAll()
         val data = ArrayList<RenderingData>()
 
         Collections.synchronizedList(planes).parallelStream().forEach { plane ->
@@ -280,19 +274,15 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
                 .findViewById(R.id.loading_indicator)
 
         // Shows the loading indicator at start
-        loadingDialogHandler
-                .sendEmptyMessage(LoadingDialogHandler.SHOW_LOADING_DIALOG)
+        loadingDialogHandler.sendEmptyMessage(LoadingDialogHandler.SHOW_LOADING_DIALOG)
 
         // Adds the inflated layout to the view
-        addContentView(mUILayout, LayoutParams(LayoutParams.MATCH_PARENT,
-                LayoutParams.MATCH_PARENT))
-
+        addContentView(mUILayout, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
     }
 
     override fun doLoadTrackersData(): Boolean {
         val tManager = TrackerManager.getInstance()
-        val objectTracker = tManager
-                .getTracker(ObjectTracker.getClassType()) as ObjectTracker ?: return false
+        val objectTracker = tManager.getTracker(ObjectTracker.getClassType()) as ObjectTracker? ?: return false
 
         if (mCurrentDataset == null) {
             mCurrentDataset = objectTracker.createDataSet()
@@ -496,7 +486,6 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
         return result
     }
 
-
     override fun doStopTrackers(): Boolean {
         // Indicate if the trackers were stopped correctly
         var result = true
@@ -531,24 +520,16 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
     }
 
     private fun setSampleAppMenuSettings() {
-        val group: SampleAppMenuGroup
-
-        group = mSampleAppMenu!!.addGroup(getString(R.string.menu_camera), true)
-        mFocusOptionView = group.addSelectionItem(getString(R.string.menu_contAutofocus),
-                CMD_AUTOFOCUS, mContAutofocus)
-
-        mFlashOptionView = group.addSelectionItem(
-                getString(R.string.menu_flash), CMD_FLASH, false)
-
+        val group: SampleAppMenuGroup = mSampleAppMenu!!.addGroup(getString(R.string.menu_camera), true)
+        mFocusOptionView = group.addSelectionItem(getString(R.string.menu_contAutofocus), CMD_AUTOFOCUS, mContAutofocus)
+        mFlashOptionView = group.addSelectionItem(getString(R.string.menu_flash), CMD_FLASH, false)
         mSampleAppMenu!!.attachMenu()
     }
-
 
     private fun setMenuToggle(view: View?, value: Boolean) {
         // OnCheckedChangeListener is called upon changing the checked state
         (view as Switch).isChecked = value
     }
-
 
     // In this function you can define the desired behavior for each menu option
     // Each case corresponds to a menu option
