@@ -15,7 +15,8 @@ abstract class DatabaseAccess : RoomDatabase() {
         if (planeDAO().count() == 0) {
 
             planeDAO().insert(
-                    Plane(1, "plane3.obj", "planeTexture.png", "p-39", 1)
+                    Plane(1, "plane3.obj", "planeTexture.png", "p-39", 1),
+                    Plane(2, "plane3.obj", "planeTexture.png", "F4U1", 2)
             )
         }
     }
@@ -24,13 +25,11 @@ abstract class DatabaseAccess : RoomDatabase() {
 
         fun getDatabase(context: Context): DatabaseAccess {
 
-            val access = Room.databaseBuilder(context.applicationContext, DatabaseAccess::class.java, "db")
+            return Room.databaseBuilder(context.applicationContext, DatabaseAccess::class.java, "db")
                     .allowMainThreadQueries()
                     .fallbackToDestructiveMigration()
                     .build()
-            access.populate()
-
-            return access
+                    .apply { populate() }
         }
     }
 }

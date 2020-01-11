@@ -67,6 +67,7 @@ public class ArSession implements UpdateCallbackInterface {
     public ArSession(Control sessionControl, int videoMode) {
         mSessionControlRef = new WeakReference<>(sessionControl);
         mVideoMode = videoMode;
+
     }
 
     // Initializes Vuforia Engine and sets up preferences.
@@ -144,7 +145,6 @@ public class ArSession implements UpdateCallbackInterface {
         return true;
     }
 
-
     // Starts Vuforia Engine asynchronously
     public void startAR() {
         ArException vuforiaException = null;
@@ -167,19 +167,16 @@ public class ArSession implements UpdateCallbackInterface {
         }
     }
 
-
     // Stops any ongoing initialization,
     // deinitializes Vuforia Engine, the camera, and trackers
     public void stopAR() throws ArException {
         // Cancel potentially running tasks
-        if (mInitVuforiaTask != null
-                && mInitVuforiaTask.getStatus() != InitVuforiaTask.Status.FINISHED) {
+        if (mInitVuforiaTask != null && mInitVuforiaTask.getStatus() != InitVuforiaTask.Status.FINISHED) {
             mInitVuforiaTask.cancel(true);
             mInitVuforiaTask = null;
         }
 
-        if (mLoadTrackerTask != null
-                && mLoadTrackerTask.getStatus() != LoadTrackerTask.Status.FINISHED) {
+        if (mLoadTrackerTask != null && mLoadTrackerTask.getStatus() != LoadTrackerTask.Status.FINISHED) {
             mLoadTrackerTask.cancel(true);
             mLoadTrackerTask = null;
         }
@@ -220,7 +217,6 @@ public class ArSession implements UpdateCallbackInterface {
         }
     }
 
-
     // Resumes Vuforia Engine, restarts the trackers and the camera
     private void resumeAR() {
         ArException vuforiaException = null;
@@ -243,43 +239,37 @@ public class ArSession implements UpdateCallbackInterface {
         }
     }
 
-
     // Initializes, configures, and starts the camera and trackers
     private void startCameraAndTrackers() throws ArException {
         String error;
         if (mCameraRunning) {
             error = "Camera already running, unable to open again";
             Log.e(LOGTAG, error);
-            throw new ArException(
-                    ArException.CAMERA_INITIALIZATION_FAILURE, error);
+            throw new ArException(ArException.CAMERA_INITIALIZATION_FAILURE, error);
         }
 
         if (!CameraDevice.getInstance().init()) {
             error = "Unable to open camera device";
             Log.e(LOGTAG, error);
-            throw new ArException(
-                    ArException.CAMERA_INITIALIZATION_FAILURE, error);
+            throw new ArException(ArException.CAMERA_INITIALIZATION_FAILURE, error);
         }
 
         if (!CameraDevice.getInstance().selectVideoMode(mVideoMode)) {
             error = "Unable to set video mode";
             Log.e(LOGTAG, error);
-            throw new ArException(
-                    ArException.CAMERA_INITIALIZATION_FAILURE, error);
+            throw new ArException(ArException.CAMERA_INITIALIZATION_FAILURE, error);
         }
 
         if (!CameraDevice.getInstance().start()) {
             error = "Unable to start camera device";
             Log.e(LOGTAG, error);
-            throw new ArException(
-                    ArException.CAMERA_INITIALIZATION_FAILURE, error);
+            throw new ArException(ArException.CAMERA_INITIALIZATION_FAILURE, error);
         }
 
         mSessionControlRef.get().doStartTrackers();
 
         mCameraRunning = true;
     }
-
 
     private void stopCamera() {
         if (mCameraRunning) {
@@ -290,13 +280,11 @@ public class ArSession implements UpdateCallbackInterface {
         }
     }
 
-
     // Callback called every cycle
     @Override
     public void Vuforia_onUpdate(State s) {
         mSessionControlRef.get().onVuforiaUpdate(s);
     }
-
 
     // Called whenever the device orientation or screen resolution changes
     public void onConfigurationChanged() {
@@ -304,7 +292,6 @@ public class ArSession implements UpdateCallbackInterface {
             Device.getInstance().setConfigurationChanged();
         }
     }
-
 
     public void onResume() {
         if (mResumeVuforiaTask == null
@@ -315,7 +302,6 @@ public class ArSession implements UpdateCallbackInterface {
         }
     }
 
-
     public void onPause() {
         if (mStarted) {
             stopCamera();
@@ -323,7 +309,6 @@ public class ArSession implements UpdateCallbackInterface {
 
         Vuforia.onPause();
     }
-
 
     public void onSurfaceChanged(int width, int height) {
         Vuforia.onSurfaceChanged(width, height);
@@ -372,8 +357,7 @@ public class ArSession implements UpdateCallbackInterface {
                     // This is necessary as the AsyncTask will run to completion
                     // regardless of the status of the component that
                     // started is.
-                } while (!isCancelled() && mProgressValue >= 0
-                        && mProgressValue < 100);
+                } while (!isCancelled() && mProgressValue >= 0 && mProgressValue < 100);
 
                 return (mProgressValue > 0);
             }
@@ -384,7 +368,6 @@ public class ArSession implements UpdateCallbackInterface {
             // Do something with the progress value "values[0]", e.g. update
             // splash screen, progress bar, etc.
         }
-
 
         protected void onPostExecute(Boolean result) {
 
@@ -609,7 +592,6 @@ public class ArSession implements UpdateCallbackInterface {
         }
     }
 
-
     private String getInitializationErrorString(int code) {
         if (code == INIT_ERRORCODE.INIT_DEVICE_NOT_SUPPORTED)
             return mActivityRef.get().getString(R.string.INIT_ERROR_DEVICE_NOT_SUPPORTED);
@@ -635,7 +617,6 @@ public class ArSession implements UpdateCallbackInterface {
     public int getVideoMode() {
         return mVideoMode;
     }
-
 
     public boolean resetDeviceTracker() {
         TrackerManager trackerManager = TrackerManager.getInstance();

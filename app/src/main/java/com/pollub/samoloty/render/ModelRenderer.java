@@ -13,38 +13,34 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.util.Log;
-
 import android.util.Pair;
 import com.pollub.samoloty.ArSession;
-import com.vuforia.DeviceTrackableResult;
-import com.vuforia.ImageTargetResult;
-import com.vuforia.Matrix44F;
-import com.vuforia.State;
-import com.vuforia.Tool;
-import com.vuforia.Trackable;
-import com.vuforia.TrackableResult;
-import com.vuforia.TrackableResultList;
-import com.vuforia.Vuforia;
 import com.pollub.samoloty.shader.CubeShaders;
+import com.pollub.samoloty.ui.CameraActivity;
 import com.pollub.samoloty.utils.SampleMath;
 import com.pollub.samoloty.utils.SampleUtils;
-
-import com.pollub.samoloty.ui.CameraActivity;
-
-import java.lang.ref.WeakReference;
-import java.util.*;
+import com.vuforia.*;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.vuforia.HINT.HINT_MAX_SIMULTANEOUS_IMAGE_TARGETS;
 
 public class ModelRenderer implements RendererControl, GLSurfaceView.Renderer {
+
     private static final String LOGTAG = "ImageTargetRenderer";
 
     private final WeakReference<CameraActivity> mActivityRef;
 
-    private CameraActivity getActivity() { return mActivityRef.get();}
+    private CameraActivity getActivity() {
+        return mActivityRef.get();
+    }
 
     private int shaderProgramID;
     private int vertexHandle;
@@ -55,19 +51,28 @@ public class ModelRenderer implements RendererControl, GLSurfaceView.Renderer {
     private VideoRenderer mVideoRenderer;
     private ArSession vuforiaAppSession;
 
+    private boolean mIsTargetCurrentlyTracked = false;
+
+    private static final float OBJECT_SCALE_FLOAT = 0.023f;
+
     //klucz - nazwa targetu, wartość - współrzędna X
     private Map<String, Float> coordinates = new HashMap<>();
 
     private Map<String, Pair<Model, Texture>> dataMap = new HashMap<>();
 
-    public void clear(){
+    public List<String> getSortedTargets() {
+
+        return new ArrayList<>(coordinates.entrySet())
+                .stream()
+                .sorted((a, b) -> Float.compare(a.getValue(), b.getValue()))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+    }
+
+    public void clear() {
         dataMap.clear();
         dataMap = null;
     }
-
-    private boolean mIsTargetCurrentlyTracked = false;
-
-    private static final float OBJECT_SCALE_FLOAT = 0.023f;
 
     public ModelRenderer(CameraActivity activity, ArSession session) {
 
@@ -137,6 +142,7 @@ public class ModelRenderer implements RendererControl, GLSurfaceView.Renderer {
 
                 float x = modelMatrix.getData()[12];
                 String name = trackable.getName();
+                coordinates.put(name, x);
 
                 Model model = dataMap.get(name).first;
                 Texture texture = dataMap.get(name).second;
@@ -170,14 +176,14 @@ public class ModelRenderer implements RendererControl, GLSurfaceView.Renderer {
                 CubeShaders.CUBE_MESH_VERTEX_SHADER,
                 CubeShaders.CUBE_MESH_FRAGMENT_SHADER);
 
-        vertexHandle = GLES20.glGetAttribLocation(shaderProgramID,"vertexPosition");
-        textureCoordHandle = GLES20.glGetAttribLocation(shaderProgramID,"vertexTexCoord");
-        mvpMatrixHandle = GLES20.glGetUniformLocation(shaderProgramID,"modelViewProjectionMatrix");
-        texSampler2DHandle = GLES20.glGetUniformLocation(shaderProgramID,"texSampler2D");
+        vertexHandle = GLES20.glGetAttribLocation(shaderProgramID, "vertexPosition");
+        textureCoordHandle = GLES20.glGetAttribLocation(shaderProgramID, "vertexTexCoord");
+        mvpMatrixHandle = GLES20.glGetUniformLocation(shaderProgramID, "modelViewProjectionMatrix");
+        texSampler2DHandle = GLES20.glGetUniformLocation(shaderProgramID, "texSampler2D");
 
     }
 
-    public void setRenderData(List<RenderingData> dataList){
+    public void setRenderData(List<RenderData> dataList) {
         dataList.forEach(data -> dataMap.put(data.getTargetName(), new Pair<>(data.getModel(), data.getTexture())));
     }
 

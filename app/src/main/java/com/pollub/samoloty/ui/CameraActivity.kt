@@ -1,15 +1,5 @@
-/*===============================================================================
-Copyright (c) 2019 PTC Inc. All Rights Reserved.
-
-Copyright (c) 2012-2014 Qualcomm Connected Experiences, Inc. All Rights Reserved.
-
-Vuforia is a trademark of PTC Inc., registered in the United States and other 
-countries.
-===============================================================================*/
-
 package com.pollub.samoloty.ui
 
-import android.app.Activity
 import android.app.AlertDialog
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
@@ -21,51 +11,35 @@ import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams
-import android.widget.*
-
-import com.vuforia.CameraDevice
-import com.vuforia.DataSet
-import com.vuforia.ObjectTracker
-import com.vuforia.PositionalDeviceTracker
-import com.vuforia.STORAGE_TYPE
-import com.vuforia.State
-import com.vuforia.TrackableResult
-import com.vuforia.TrackerManager
-import com.vuforia.Vuforia
-import com.vuforia.artest.R
-import com.pollub.samoloty.ArException
-import com.pollub.samoloty.ArSession
-import com.pollub.samoloty.Control
-import com.pollub.samoloty.database.Repository
-import com.pollub.samoloty.utils.SampleAppTimer
-import com.pollub.samoloty.utils.LoadingDialogHandler
-import com.pollub.samoloty.utils.GLView
+import android.widget.RelativeLayout
+import android.widget.Switch
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
+import com.pollub.samoloty.*
+import com.pollub.samoloty.render.ModelRenderer
+import com.pollub.samoloty.render.RenderData
 import com.pollub.samoloty.ui.menu.SampleAppMenu
 import com.pollub.samoloty.ui.menu.SampleAppMenuGroup
 import com.pollub.samoloty.ui.menu.SampleAppMenuInterface
-import com.pollub.samoloty.render.ModelRenderer
-import com.pollub.samoloty.render.ObjModel
-import com.pollub.samoloty.render.RenderingData
-import com.pollub.samoloty.render.Texture
-import kotlinx.coroutines.*
-
-import java.io.IOException
+import com.pollub.samoloty.utils.GLView
+import com.pollub.samoloty.utils.LoadingDialogHandler
+import com.pollub.samoloty.utils.LoadingDialogHandler.HIDE_LOADING_DIALOG
+import com.pollub.samoloty.utils.LoadingDialogHandler.SHOW_LOADING_DIALOG
+import com.pollub.samoloty.utils.SampleAppTimer
+import com.vuforia.*
+import com.vuforia.artest.R
 import java.lang.ref.WeakReference
 import java.util.*
 
-/**
- * The main activity for the ImageTargets sample.
- * Image Targets allows users to create 2D targets for detection and tracking
- *
- *
- * This class does high-level handling of the Vuforia lifecycle and any UI updates
- *
- *
- * For ImageTarget-specific rendering, check out ImageTargetRenderer.java
- * For the low-level Vuforia lifecycle code, check out SampleApplicationSession.java
- */
-class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineScope by MainScope() {
+class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
 
+    //TODO zrobic pobieranie wspolrzednych z ModelRenderer co kilka sekund
+    // i sprawdzac czy dobrze ustawione w GameManager
+
+    private lateinit var viewModel: CameraActivityViewModel
+    private val gameStateManager: GameManager = GameManager()
 
     private var vuforiaAppSession: ArSession? = null
     private var mCurrentDataset: DataSet? = null
@@ -75,15 +49,13 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
 
     // Menu option flags
     private var mSwitchDatasetAsap = false
-    private var mFlash = false
     private var mContAutofocus = true
 
     private var mFocusOptionView: View? = null
-    private var mFlashOptionView: View? = null
 
     private var mUILayout: RelativeLayout? = null
 
-    private var mSampleAppMenu: SampleAppMenu? = null
+    private var appMenu: SampleAppMenu? = null
     internal var mSettingsAdditionalViews = ArrayList<View>()
 
     private var mSampleAppMessage: SampleAppMessage? = null
@@ -91,6 +63,26 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
     private var mStatusDelayTimer: SampleAppTimer? = null
 
     private var mCurrentStatusInfo: Int = 0
+
+    private val handler = Handler()
+
+    private fun onGameCompleted() {
+        AlertDialog.Builder(this).setMessage("Wygrane").create().show()
+    }
+
+    private val checkOrder = object : Runnable {
+
+        override fun run() {
+
+            val targets = mRenderer!!.sortedTargets
+            val isOrderCorrect =  gameStateManager.isOrderCorrect(targets)
+
+            if (isOrderCorrect)
+                onGameCompleted()
+            else
+                handler.postDelayed(this, 2000)
+        }
+    }
 
     val loadingDialogHandler = LoadingDialogHandler(this)
 
@@ -106,7 +98,6 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
         startLoadingAnimation()
 
         vuforiaAppSession!!.initAR(this, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-
         mGestureDetector = GestureDetector(applicationContext, GestureListener(this))
 
         // Relocalization timer and message
@@ -135,12 +126,14 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
                 super.onFinish()
             }
         }
+        viewModel = ViewModelProviders.of(this)[CameraActivityViewModel::class.java]
+        viewModel.getPlanes().observe(this, Observer { gameStateManager.setPlanes(it) })
+        viewModel.getRenderData().observe(this, Observer { onDataLoaded(it) })
     }
 
     private inner class GestureListener(activity: CameraActivity) : GestureDetector.SimpleOnGestureListener() {
         // Used to set autofocus one second after a manual focus is triggered
         private val autofocusHandler = Handler()
-
         private val activityRef: WeakReference<CameraActivity> = WeakReference(activity)
 
         override fun onDown(e: MotionEvent): Boolean {
@@ -149,8 +142,7 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
 
         // Process Single Tap event to trigger autofocus
         override fun onSingleTapUp(e: MotionEvent): Boolean {
-            val result = CameraDevice.getInstance().setFocusMode(
-                    CameraDevice.FOCUS_MODE.FOCUS_MODE_TRIGGERAUTO)
+            val result = CameraDevice.getInstance().setFocusMode(CameraDevice.FOCUS_MODE.FOCUS_MODE_TRIGGERAUTO)
             if (!result)
                 Log.e("SingleTapUp", "Unable to trigger focus")
 
@@ -158,8 +150,8 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
             // after 1 second
             autofocusHandler.postDelayed({
                 if (activityRef.get()!!.mContAutofocus) {
-                    val autofocusResult = CameraDevice.getInstance().setFocusMode(
-                            CameraDevice.FOCUS_MODE.FOCUS_MODE_CONTINUOUSAUTO)
+                    val autofocusResult = CameraDevice.getInstance()
+                            .setFocusMode(CameraDevice.FOCUS_MODE.FOCUS_MODE_CONTINUOUSAUTO)
 
                     if (!autofocusResult)
                         Log.e("SingleTapUp", "Unable to re-enable continuous auto-focus")
@@ -173,7 +165,6 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
     override fun onResume() {
         Log.d(LOGTAG, "onResume")
         super.onResume()
-
         showProgressIndicator(true)
         vuforiaAppSession!!.onResume()
     }
@@ -194,12 +185,6 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
             onPause()
         }
 
-        // Turn off the flash
-        if (mFlashOptionView != null && mFlash) {
-            // OnCheckedChangeListener is called upon changing the checked state
-            setMenuToggle(mFlashOptionView, false)
-        }
-
         vuforiaAppSession!!.onPause()
     }
 
@@ -213,10 +198,6 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
             Log.e(LOGTAG, e.string)
         }
 
-        //zatrzymanie wczytywania danych
-        cancel()
-
-        // wyczyszczenie danych
         mRenderer!!.clear()
         System.gc()
     }
@@ -227,40 +208,44 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
         val stencilSize = 0
         val translucent = Vuforia.requiresAlpha()
 
+
         mGlView = GLView(applicationContext)
         mGlView!!.init(translucent, depthSize, stencilSize)
+
         mRenderer = ModelRenderer(this, vuforiaAppSession)
+
         mGlView!!.setRenderer(mRenderer)
         mGlView!!.preserveEGLContextOnPause = true
     }
 
-    private fun loadData() {
-
-        val planes = Repository.getAll()
-        val data = ArrayList<RenderingData>()
-
-        Collections.synchronizedList(planes).parallelStream().forEach { plane ->
-
-            Log.d("plane", plane.toString())
-
-            val model = ObjModel()
-            try {
-                model.loadModel(resources.assets, plane.modelFilepath)
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
-
-            val texture = Texture.loadTextureFromApk(plane.textureFilepath, assets)
-
-            data.add(RenderingData(plane.targetName, model, texture!!))
-        }
+    private fun onDataLoaded(data: List<RenderData>) {
 
         mRenderer!!.setRenderData(data)
+        mRenderer!!.setActive(true)
+
+        // Now add the GL surface view. It is important
+        // that the OpenGL ES surface view gets added
+        // BEFORE the camera is started and video
+        // background is configured.
+        addContentView(mGlView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+
+        // Sets the UILayout to be drawn in front of the camera
+        mUILayout!!.bringToFront()
+        mUILayout!!.setBackgroundColor(Color.TRANSPARENT)
+
+        appMenu = SampleAppMenu(this@CameraActivity,
+                this@CameraActivity, "Samoloty",
+                mGlView, mUILayout!!, mSettingsAdditionalViews)
+        setSampleAppMenuSettings()
+
+        vuforiaAppSession!!.startAR()
+
+        //TODO
+        handler.post(checkOrder)
     }
 
     private fun startLoadingAnimation() {
         mUILayout = View.inflate(applicationContext, R.layout.camera_overlay, null) as RelativeLayout
-
         mUILayout!!.visibility = View.VISIBLE
         mUILayout!!.setBackgroundColor(Color.BLACK)
 
@@ -274,7 +259,7 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
                 .findViewById(R.id.loading_indicator)
 
         // Shows the loading indicator at start
-        loadingDialogHandler.sendEmptyMessage(LoadingDialogHandler.SHOW_LOADING_DIALOG)
+        loadingDialogHandler.sendEmptyMessage(SHOW_LOADING_DIALOG)
 
         // Adds the inflated layout to the view
         addContentView(mUILayout, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
@@ -284,22 +269,17 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
         val tManager = TrackerManager.getInstance()
         val objectTracker = tManager.getTracker(ObjectTracker.getClassType()) as ObjectTracker? ?: return false
 
-        if (mCurrentDataset == null) {
+        if (mCurrentDataset == null)
             mCurrentDataset = objectTracker.createDataSet()
-        }
 
-        if (mCurrentDataset == null) {
+        if (mCurrentDataset == null)
             return false
-        }
 
-        val dataSet = "PlanesDatabase.xml"
-        if (!mCurrentDataset!!.load(dataSet, STORAGE_TYPE.STORAGE_APPRESOURCE)) {
+        if (!mCurrentDataset!!.load(dataSet, STORAGE_TYPE.STORAGE_APPRESOURCE))
             return false
-        }
 
-        if (!objectTracker.activateDataSet(mCurrentDataset)) {
+        if (!objectTracker.activateDataSet(mCurrentDataset))
             return false
-        }
 
         val trackableList = mCurrentDataset!!.trackables
         for (trackable in trackableList) {
@@ -307,32 +287,26 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
             trackable.userData = name
             Log.d(LOGTAG, "UserData:Set the following user data " + trackable.userData)
         }
-
         return true
     }
-
 
     override fun doUnloadTrackersData(): Boolean {
         // Indicate if the trackers were unloaded correctly
         var result = true
 
         val tManager = TrackerManager.getInstance()
-        val objectTracker = tManager
-                .getTracker(ObjectTracker.getClassType()) as ObjectTracker ?: return false
+        val objectTracker = tManager.getTracker(ObjectTracker.getClassType()) as ObjectTracker? ?: return false
 
-        if (mCurrentDataset != null && mCurrentDataset!!.isActive) {
+        if (mCurrentDataset?.isActive == true) {
             if (objectTracker.activeDataSets.at(0) == mCurrentDataset && !objectTracker.deactivateDataSet(mCurrentDataset)) {
                 result = false
             } else if (!objectTracker.destroyDataSet(mCurrentDataset)) {
                 result = false
             }
-
             mCurrentDataset = null
         }
-
         return result
     }
-
 
     override fun onVuforiaResumed() {
         if (mGlView != null) {
@@ -345,10 +319,13 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
         mRenderer!!.updateRenderingPrimitives()
 
         if (mContAutofocus) {
-            if (!CameraDevice.getInstance().setFocusMode(CameraDevice.FOCUS_MODE.FOCUS_MODE_CONTINUOUSAUTO)) {
+
+            val camera = CameraDevice.getInstance()
+
+            if (!camera.setFocusMode(CameraDevice.FOCUS_MODE.FOCUS_MODE_CONTINUOUSAUTO)) {
                 // If continuous autofocus mode fails, attempt to set to a different mode
-                if (!CameraDevice.getInstance().setFocusMode(CameraDevice.FOCUS_MODE.FOCUS_MODE_TRIGGERAUTO)) {
-                    CameraDevice.getInstance().setFocusMode(CameraDevice.FOCUS_MODE.FOCUS_MODE_NORMAL)
+                if (!camera.setFocusMode(CameraDevice.FOCUS_MODE.FOCUS_MODE_TRIGGERAUTO)) {
+                    camera.setFocusMode(CameraDevice.FOCUS_MODE.FOCUS_MODE_NORMAL)
                 }
 
                 setMenuToggle(mFocusOptionView, false)
@@ -362,82 +339,47 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
         showProgressIndicator(false)
     }
 
-
     private fun showProgressIndicator(show: Boolean) {
-        if (show) {
-            loadingDialogHandler.sendEmptyMessage(LoadingDialogHandler.SHOW_LOADING_DIALOG)
-        } else {
-            loadingDialogHandler.sendEmptyMessage(LoadingDialogHandler.HIDE_LOADING_DIALOG)
-        }
+        val message = if (show) SHOW_LOADING_DIALOG else HIDE_LOADING_DIALOG
+        loadingDialogHandler.sendEmptyMessage(message)
     }
-
 
     // Called once Vuforia has been initialized or
     // an error has caused Vuforia initialization to stop
     override fun onInitARDone(exception: ArException?) {
-        if (exception == null) {
-            initApplicationAR()
 
-            launch(Dispatchers.IO) {
-                loadData()
-
-                withContext(Dispatchers.Main) {
-
-                    mRenderer!!.setActive(true)
-
-                    // Now add the GL surface view. It is important
-                    // that the OpenGL ES surface view gets added
-                    // BEFORE the camera is started and video
-                    // background is configured.
-                    addContentView(mGlView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
-
-                    // Sets the UILayout to be drawn in front of the camera
-                    mUILayout!!.bringToFront()
-                    mUILayout!!.setBackgroundColor(Color.TRANSPARENT)
-
-                    mSampleAppMenu = SampleAppMenu(this@CameraActivity,
-                            this@CameraActivity, "Samoloty",
-                            mGlView, mUILayout!!, mSettingsAdditionalViews)
-                    setSampleAppMenuSettings()
-
-                    vuforiaAppSession!!.startAR()
-                }
-            }
-        } else {
+        if (exception != null) {
             Log.e(LOGTAG, exception.string)
             showInitializationErrorMessage(exception.string)
+            return
         }
+
+        initApplicationAR()
+        viewModel.loadData(assets)
     }
 
     private fun showInitializationErrorMessage(message: String) {
         runOnUiThread {
             mErrorDialog?.dismiss()
 
-            // Generates an Alert Dialog to show the error message
-            val builder = AlertDialog.Builder(
-                    this@CameraActivity)
-            builder
+            AlertDialog.Builder(this@CameraActivity)
                     .setMessage(message)
                     .setTitle(getString(R.string.INIT_ERROR))
                     .setCancelable(false)
                     .setIcon(0)
-                    .setPositiveButton(getString(R.string.button_OK)) { dialog, id -> finish() }
-
-            mErrorDialog = builder.create()
-            mErrorDialog!!.show()
+                    .setPositiveButton(getString(R.string.button_OK)) { _, _ -> finish() }
+                    .create()
+                    .show()
         }
     }
-
 
     // Called every frame
     override fun onVuforiaUpdate(state: State) {
         if (mSwitchDatasetAsap) {
             mSwitchDatasetAsap = false
             val tm = TrackerManager.getInstance()
-            val ot = tm.getTracker(ObjectTracker
-                    .getClassType()) as ObjectTracker
-            if (ot == null || mCurrentDataset == null
-                    || ot.activeDataSets.at(0) == null) {
+            val ot = tm.getTracker(ObjectTracker.getClassType()) as ObjectTracker?
+            if (ot == null || mCurrentDataset == null || ot.activeDataSets.at(0) == null) {
                 Log.d(LOGTAG, "Failed to swap datasets")
                 return
             }
@@ -447,18 +389,13 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
         }
     }
 
-
     override fun doInitTrackers(): Boolean {
         // Indicate if the trackers were initialized correctly
         var result = true
-
         val tManager = TrackerManager.getInstance()
-
         val tracker = tManager.initTracker(ObjectTracker.getClassType())
         if (tracker == null) {
-            Log.e(
-                    LOGTAG,
-                    "Tracker not initialized. Tracker already initialized or the camera is already started")
+            Log.e(LOGTAG, "Tracker not initialized. Tracker already initialized or the camera is already started")
             result = false
         } else {
             Log.i(LOGTAG, "Tracker successfully initialized")
@@ -467,63 +404,35 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
         return result
     }
 
-
     override fun doStartTrackers(): Boolean {
-        // Indicate if the trackers were started correctly
-        var result = true
-
         val trackerManager = TrackerManager.getInstance()
-
         val objectTracker = trackerManager.getTracker(ObjectTracker.getClassType())
-
-        if (objectTracker != null && objectTracker.start()) {
-            Log.i(LOGTAG, "Successfully started Object Tracker")
-        } else {
-            Log.e(LOGTAG, "Failed to start Object Tracker")
-            result = false
-        }
-
-        return result
+        return objectTracker?.start() == true
     }
 
     override fun doStopTrackers(): Boolean {
-        // Indicate if the trackers were stopped correctly
-        var result = true
-
         val trackerManager = TrackerManager.getInstance()
-
         val objectTracker = trackerManager.getTracker(ObjectTracker.getClassType())
-        if (objectTracker != null) {
-            objectTracker.stop()
-            Log.i(LOGTAG, "Successfully stopped object tracker")
-        } else {
-            Log.e(LOGTAG, "Failed to stop object tracker")
-            result = false
-        }
-
-        return result
+        objectTracker?.run { stop() } ?: return false
+        return true
     }
 
     override fun doDeinitTrackers(): Boolean {
         val tManager = TrackerManager.getInstance()
-
-        // Indicate if the trackers were deinitialized correctly
         val result = tManager.deinitTracker(ObjectTracker.getClassType())
         tManager.deinitTracker(PositionalDeviceTracker.getClassType())
-
         return result
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         // Process the Gestures
-        return mSampleAppMenu != null && mSampleAppMenu!!.processEvent(event) || mGestureDetector!!.onTouchEvent(event)
+        return appMenu != null && appMenu!!.processEvent(event) || mGestureDetector!!.onTouchEvent(event)
     }
 
     private fun setSampleAppMenuSettings() {
-        val group: SampleAppMenuGroup = mSampleAppMenu!!.addGroup(getString(R.string.menu_camera), true)
+        val group: SampleAppMenuGroup = appMenu!!.addGroup(getString(R.string.menu_camera), true)
         mFocusOptionView = group.addSelectionItem(getString(R.string.menu_contAutofocus), CMD_AUTOFOCUS, mContAutofocus)
-        mFlashOptionView = group.addSelectionItem(getString(R.string.menu_flash), CMD_FLASH, false)
-        mSampleAppMenu!!.attachMenu()
+        appMenu!!.attachMenu()
     }
 
     private fun setMenuToggle(view: View?, value: Boolean) {
@@ -539,24 +448,6 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
         when (command) {
             CMD_BACK -> finish()
 
-            CMD_FLASH -> {
-                result = CameraDevice.getInstance().setFlashTorchMode(!mFlash)
-
-                if (result) {
-                    mFlash = !mFlash
-                } else {
-                    showToast(getString(if (mFlash)
-                        R.string.menu_flash_error_off
-                    else
-                        R.string.menu_flash_error_on))
-                    Log.e(LOGTAG,
-                            getString(if (mFlash)
-                                R.string.menu_flash_error_off
-                            else
-                                R.string.menu_flash_error_on))
-                }
-            }
-
             CMD_AUTOFOCUS ->
 
                 if (mContAutofocus) {
@@ -566,9 +457,8 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
                     if (result) {
                         mContAutofocus = false
                     } else {
-                        showToast(getString(R.string.menu_contAutofocus_error_off))
-                        Log.e(LOGTAG,
-                                getString(R.string.menu_contAutofocus_error_off))
+                        toast(getString(R.string.menu_contAutofocus_error_off))
+                        Log.e(LOGTAG, getString(R.string.menu_contAutofocus_error_off))
                     }
                 } else {
                     result = CameraDevice.getInstance().setFocusMode(
@@ -577,16 +467,14 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
                     if (result) {
                         mContAutofocus = true
                     } else {
-                        showToast(getString(R.string.menu_contAutofocus_error_on))
-                        Log.e(LOGTAG,
-                                getString(R.string.menu_contAutofocus_error_on))
+                        toast(getString(R.string.menu_contAutofocus_error_on))
+                        Log.e(LOGTAG, getString(R.string.menu_contAutofocus_error_on))
                     }
                 }
         }
 
         return result
     }
-
 
     fun checkForRelocalization(statusInfo: Int) {
         if (mCurrentStatusInfo == statusInfo) {
@@ -616,24 +504,22 @@ class CameraActivity : Activity(), Control, SampleAppMenuInterface, CoroutineSco
         }
     }
 
-
     private fun clearSampleAppMessage() {
         runOnUiThread {
             mSampleAppMessage?.hide()
         }
     }
 
-
-    private fun showToast(text: String) {
-        Toast.makeText(applicationContext, text, Toast.LENGTH_SHORT).show()
+    private fun toast(text: String) {
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
     }
 
     companion object {
         private val LOGTAG = "CameraActivity"
 
-        // Menu options
         private val CMD_BACK = -1
         private val CMD_AUTOFOCUS = 2
-        private val CMD_FLASH = 3
+
+        const val dataSet = "PlanesDatabase.xml"
     }
 }

@@ -1,15 +1,12 @@
 package com.pollub.samoloty.database
 
-import android.content.Context
-
 object Repository {
 
-    private var database: DatabaseAccess? = null
+    private lateinit var planeDAO: PlaneDAO
 
-    operator fun invoke(context: Context) : Repository {
-        if (database == null) database = DatabaseAccess.getDatabase(context)
-        return this
+    fun create(database: DatabaseAccess){
+        planeDAO = database.planeDAO()
     }
 
-    fun getAll() = database!!.planeDAO().findAll()
+    fun getAll() = planeDAO.findAll()
 }
