@@ -15,10 +15,9 @@ import android.opengl.Matrix;
 import android.util.Log;
 import android.util.Pair;
 import com.pollub.samoloty.ArSession;
-import com.pollub.samoloty.shader.CubeShaders;
+import com.pollub.samoloty.render.shader.CubeShaders;
 import com.pollub.samoloty.ui.CameraActivity;
-import com.pollub.samoloty.utils.SampleMath;
-import com.pollub.samoloty.utils.SampleUtils;
+import com.pollub.samoloty.utils.MathUtils;
 import com.vuforia.*;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -59,6 +58,13 @@ public class ModelRenderer implements RendererControl, GLSurfaceView.Renderer {
     private Map<String, Float> coordinates = new HashMap<>();
 
     private Map<String, Pair<Model, Texture>> dataMap = new HashMap<>();
+
+    public void setRenderData(List<RenderData> dataList) {
+        dataList.forEach(data -> {
+            Pair<Model, Texture> pair = new Pair<>(data.getModel(), data.getTexture());
+            dataMap.put(data.getTargetName(), pair);
+        });
+    }
 
     public List<String> getSortedTargets() {
 
@@ -104,11 +110,10 @@ public class ModelRenderer implements RendererControl, GLSurfaceView.Renderer {
         mVideoRenderer.renderVideoBackground();
 
         // Set the device pose matrix as identity
-        Matrix44F devicePoseMatrix = SampleMath.Matrix44FIdentity();
+        Matrix44F devicePoseMatrix = MathUtils.Matrix44FIdentity();
         Matrix44F modelMatrix;
 
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-
         GLES20.glEnable(GLES20.GL_CULL_FACE);
         GLES20.glCullFace(GLES20.GL_BACK);
         GLES20.glFrontFace(GLES20.GL_CCW);   // Back camera
@@ -124,7 +129,7 @@ public class ModelRenderer implements RendererControl, GLSurfaceView.Renderer {
                 modelMatrix = Tool.convertPose2GLMatrix(state.getDeviceTrackableResult().getPose());
 
                 // We transpose here because Matrix44FInverse returns a transposed matrix
-                devicePoseMatrix = SampleMath.Matrix44FTranspose(SampleMath.Matrix44FInverse(modelMatrix));
+                devicePoseMatrix = MathUtils.Matrix44FTranspose(MathUtils.Matrix44FInverse(modelMatrix));
             }
         }
 
@@ -147,9 +152,10 @@ public class ModelRenderer implements RendererControl, GLSurfaceView.Renderer {
                 Model model = dataMap.get(name).first;
                 Texture texture = dataMap.get(name).second;
 
-                renderModel(model, texture, projectionMatrix, devicePoseMatrix.getData(), modelMatrix.getData());
+                renderModel(model, texture, projectionMatrix,
+                        devicePoseMatrix.getData(), modelMatrix.getData());
 
-                SampleUtils.checkGLError("Image Targets renderFrame");
+                RenderUtils.checkGLError("Image Targets renderFrame");
             }
         }
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
@@ -172,7 +178,7 @@ public class ModelRenderer implements RendererControl, GLSurfaceView.Renderer {
                     t.mWidth, t.mHeight, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, t.mData);
         }
 
-        shaderProgramID = SampleUtils.createProgramFromShaderSrc(
+        shaderProgramID = RenderUtils.createProgramFromShaderSrc(
                 CubeShaders.CUBE_MESH_VERTEX_SHADER,
                 CubeShaders.CUBE_MESH_FRAGMENT_SHADER);
 
@@ -181,10 +187,6 @@ public class ModelRenderer implements RendererControl, GLSurfaceView.Renderer {
         mvpMatrixHandle = GLES20.glGetUniformLocation(shaderProgramID, "modelViewProjectionMatrix");
         texSampler2DHandle = GLES20.glGetUniformLocation(shaderProgramID, "texSampler2D");
 
-    }
-
-    public void setRenderData(List<RenderData> dataList) {
-        dataList.forEach(data -> dataMap.put(data.getTargetName(), new Pair<>(data.getModel(), data.getTexture())));
     }
 
     private void renderModel(Model model, Texture texture, float[] projectionMatrix, float[] viewMatrix, float[] modelMatrix) {
@@ -217,13 +219,12 @@ public class ModelRenderer implements RendererControl, GLSurfaceView.Renderer {
         // Pass the model view matrix to the shader
         GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, modelViewProjection, 0);
 
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, model.getNumObjectVertex() * 5);
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, model.getVertexCount() * 5);
 
         // Disable the enabled arrays
         GLES20.glDisableVertexAttribArray(vertexHandle);
         GLES20.glDisableVertexAttribArray(textureCoordHandle);
     }
-
 
     private void setIsTargetCurrentlyTracked(TrackableResultList trackableResultList) {
         for (TrackableResult result : trackableResultList) {
@@ -279,7 +280,8 @@ public class ModelRenderer implements RendererControl, GLSurfaceView.Renderer {
     }
 
 
-    public void onConfigurationChanged() {
+    private void onConfigurationChanged() {
         mVideoRenderer.onConfigurationChanged();
     }
 }
+

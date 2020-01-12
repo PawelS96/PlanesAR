@@ -7,7 +7,7 @@ Vuforia is a trademark of PTC Inc., registered in the United States and other
 countries.
 ===============================================================================*/
 
-package com.pollub.samoloty.utils;
+package com.pollub.samoloty.ui;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;

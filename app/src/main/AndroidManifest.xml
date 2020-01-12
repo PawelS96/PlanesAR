@@ -18,25 +18,14 @@
          other camera features that you do not request will no longer be
          assumed as required.
     -->
+
     <uses-feature android:name="android.hardware.camera"/>
 
-    <!--
-        Add this permission to get access to the camera.
-    -->
     <uses-permission android:name="android.permission.CAMERA"/>
 
-    <!--
-        Add this permission to allow opening network sockets.
-    -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
-    <!--
-        Add this permission to check which network access properties (e.g.
-        active type: 3G/WiFi).
-     -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
     <application
             android:name="com.pollub.samoloty.App"

@@ -23,7 +23,7 @@ import com.vuforia.VideoBackgroundConfig;
  * Here you can find common vector and matrix operations
  */
 @SuppressWarnings("unused")
-public class SampleMath
+public class MathUtils
 {
     
     private static final String LOGTAG = "SampleMath";

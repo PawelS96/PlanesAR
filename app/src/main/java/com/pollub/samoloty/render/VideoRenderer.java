@@ -30,8 +30,7 @@ import com.vuforia.Vec2I;
 import com.vuforia.Vec4I;
 import com.vuforia.VideoBackgroundConfig;
 import com.vuforia.VideoMode;
-import com.pollub.samoloty.utils.SampleUtils;
-import com.pollub.samoloty.shader.VideoBackgroundShader;
+import com.pollub.samoloty.render.shader.VideoBackgroundShader;
 
 import java.lang.ref.WeakReference;
 
@@ -128,7 +127,7 @@ public class VideoRenderer {
 
     // Initializes shader
     private void initRendering() {
-        vbShaderProgramID = SampleUtils.createProgramFromShaderSrc(VideoBackgroundShader.VB_VERTEX_SHADER,
+        vbShaderProgramID = RenderUtils.createProgramFromShaderSrc(VideoBackgroundShader.VB_VERTEX_SHADER,
                 VideoBackgroundShader.VB_FRAGMENT_SHADER);
 
         // Rendering configuration for video background
@@ -244,7 +243,7 @@ public class VideoRenderer {
         GLES20.glDisableVertexAttribArray(vbVertexHandle);
         GLES20.glDisableVertexAttribArray(vbTexCoordHandle);
 
-        SampleUtils.checkGLError("Rendering of the video background failed");
+        RenderUtils.checkGLError("Rendering of the video background failed");
     }
 
     // Configures the video mode and sets offsets for the camera's image

@@ -23,11 +23,10 @@ import com.pollub.samoloty.render.RenderData
 import com.pollub.samoloty.ui.menu.SampleAppMenu
 import com.pollub.samoloty.ui.menu.SampleAppMenuGroup
 import com.pollub.samoloty.ui.menu.SampleAppMenuInterface
-import com.pollub.samoloty.utils.GLView
 import com.pollub.samoloty.utils.LoadingDialogHandler
 import com.pollub.samoloty.utils.LoadingDialogHandler.HIDE_LOADING_DIALOG
 import com.pollub.samoloty.utils.LoadingDialogHandler.SHOW_LOADING_DIALOG
-import com.pollub.samoloty.utils.SampleAppTimer
+import com.pollub.samoloty.utils.Timer
 import com.vuforia.*
 import com.vuforia.artest.R
 import java.lang.ref.WeakReference
@@ -58,9 +57,9 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
     private var appMenu: SampleAppMenu? = null
     internal var mSettingsAdditionalViews = ArrayList<View>()
 
-    private var mSampleAppMessage: SampleAppMessage? = null
-    private var mRelocalizationTimer: SampleAppTimer? = null
-    private var mStatusDelayTimer: SampleAppTimer? = null
+    private var mPopupMessage: PopupMessage? = null
+    private var mRelocalizationTimer: Timer? = null
+    private var mStatusDelayTimer: Timer? = null
 
     private var mCurrentStatusInfo: Int = 0
 
@@ -101,16 +100,16 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
         mGestureDetector = GestureDetector(applicationContext, GestureListener(this))
 
         // Relocalization timer and message
-        mSampleAppMessage = SampleAppMessage(this, mUILayout!!, mUILayout!!.findViewById(R.id.topbar_layout), false)
+        mPopupMessage = PopupMessage(this, mUILayout!!, mUILayout!!.findViewById(R.id.topbar_layout), false)
 
-        mRelocalizationTimer = object : SampleAppTimer(10000, 1000) {
+        mRelocalizationTimer = object : Timer(10000, 1000) {
             override fun onFinish() {
                 vuforiaAppSession?.resetDeviceTracker()
                 super.onFinish()
             }
         }
 
-        mStatusDelayTimer = object : SampleAppTimer(1000, 1000) {
+        mStatusDelayTimer = object : Timer(1000, 1000) {
             override fun onFinish() {
                 if (mRenderer!!.isTargetCurrentlyTracked) {
                     super.onFinish()
@@ -121,7 +120,7 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
                     mRelocalizationTimer!!.startTimer()
                 }
 
-                runOnUiThread { mSampleAppMessage!!.show(getString(R.string.instruct_relocalize)) }
+                runOnUiThread { mPopupMessage!!.show(getString(R.string.instruct_relocalize)) }
 
                 super.onFinish()
             }
@@ -255,8 +254,7 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
         mSettingsAdditionalViews.add(topbarLayout)
 
         // Gets a reference to the loading dialog
-        loadingDialogHandler.mLoadingDialogContainer = mUILayout!!
-                .findViewById(R.id.loading_indicator)
+        loadingDialogHandler.mLoadingDialogContainer = mUILayout!!.findViewById(R.id.loading_indicator)
 
         // Shows the loading indicator at start
         loadingDialogHandler.sendEmptyMessage(SHOW_LOADING_DIALOG)
@@ -499,14 +497,14 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
             }
 
             runOnUiThread {
-                mSampleAppMessage?.hide()
+                mPopupMessage?.hide()
             }
         }
     }
 
     private fun clearSampleAppMessage() {
         runOnUiThread {
-            mSampleAppMessage?.hide()
+            mPopupMessage?.hide()
         }
     }
 

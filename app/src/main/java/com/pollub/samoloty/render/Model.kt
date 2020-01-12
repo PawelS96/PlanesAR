@@ -7,24 +7,24 @@ Vuforia is a trademark of PTC Inc., registered in the United States and other
 countries.
 ===============================================================================*/
 
-package com.pollub.samoloty.render;
+package com.pollub.samoloty.render
 
-import java.nio.Buffer;
+import java.nio.Buffer
 
 /**
  * The Model utility class is used to render various 3D objects and stores
  * all the information required for rendering.
  */
 
-public abstract class Model {
+abstract class Model {
 
-    public abstract Buffer getVertices();
+    abstract fun getVertices(): Buffer
 
-    public abstract Buffer getTexCoords();
+    abstract fun getTexCoords(): Buffer
 
-    public abstract Buffer getNormals();
+   // abstract fun getNormals(): Buffer
 
-    public abstract Buffer getIndices();
+   // abstract fun getIndices(): Buffer
 
-    public abstract int getNumObjectVertex();
+    abstract fun getVertexCount(): Int
 }

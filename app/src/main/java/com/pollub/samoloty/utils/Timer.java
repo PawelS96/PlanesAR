@@ -16,13 +16,13 @@ import android.os.CountDownTimer;
  * To perform some action when the timer is finished,
  * override the onFinish() function when creating an instance of this object
  */
-public class SampleAppTimer extends CountDownTimer
+public class Timer extends CountDownTimer
 {
     private static final String LOGTAG = "SampleAppTimer";
     private boolean mIsRunning = false;
 
 
-    protected SampleAppTimer(long timerLength, long timerInterval)
+    protected Timer(long timerLength, long timerInterval)
     {
         super(timerLength, timerInterval);
     }

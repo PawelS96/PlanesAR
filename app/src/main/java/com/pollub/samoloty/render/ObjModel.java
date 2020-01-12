@@ -2,6 +2,7 @@ package com.pollub.samoloty.render;
 
 import android.content.res.AssetManager;
 import android.util.Log;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,44 +19,38 @@ public class ObjModel extends Model {
     private static final int BUFFER_READER_SIZE = 65536;
     private static final boolean ENABLE_LOGGING = true;
 
-    private String filename;
-
-    public String getFilename() {
-        return filename;
-    }
-
     private int numVerts = 0;
 
     private ByteBuffer vBuffer, nBuffer, tBuffer;
 
+    @NotNull
     @Override
     public Buffer getVertices() {
         return vBuffer;
     }
 
+    @NotNull
     @Override
     public Buffer getTexCoords() {
         return tBuffer;
     }
 
-    @Override
-    public Buffer getNormals() {
-        return nBuffer;
-    }
+   // @Override
+    //public Buffer getNormals() {
+      //  return nBuffer;
+   // }
 
-    @Override
+   /* @Override
     public Buffer getIndices() {
         return null;
     }
-
+*/
     @Override
-    public int getNumObjectVertex() {
-        return  numVerts;
+    public int getVertexCount() {
+        return numVerts;
     }
 
     public void loadModel(AssetManager assetManager, String filename) throws IOException{
-
-        this.filename = filename;
 
         long time1 = System.currentTimeMillis();
 

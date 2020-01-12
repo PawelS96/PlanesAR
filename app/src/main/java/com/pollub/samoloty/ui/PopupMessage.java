@@ -25,13 +25,14 @@ import com.vuforia.artest.R;
  * To change the length of time the toast appears on screen, modify FADE_IN_OUT_DURATION (ms)
  * For additional configuration, modify the AnimationListener
  */
-public class SampleAppMessage {
+public class PopupMessage {
+
     private final View mView;
     private final TextView mTextMessageView;
     private final Animation mFadeIn;
     private final Animation mFadeOut;
 
-    public SampleAppMessage(Context context, ViewGroup parentView, View placementReferenceView, boolean placeAboveView) {
+    public PopupMessage(Context context, ViewGroup parentView, View placementReferenceView, boolean placeAboveView) {
         int FADE_IN_OUT_DURATION = 2000;
 
         mView = View.inflate(context, R.layout.sample_app_message_view, null);

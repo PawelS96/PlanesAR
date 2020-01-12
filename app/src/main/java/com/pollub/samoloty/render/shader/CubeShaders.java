@@ -7,7 +7,7 @@ Vuforia is a trademark of PTC Inc., registered in the United States and other
 countries.
 ===============================================================================*/
 
-package com.pollub.samoloty.shader;
+package com.pollub.samoloty.render.shader;
 
 /**
  * These shaders are used to render a texture on a model

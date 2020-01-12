@@ -7,7 +7,7 @@ Vuforia is a trademark of PTC Inc., registered in the United States and other
 countries.
 ===============================================================================*/
 
-package com.pollub.samoloty.utils;
+package com.pollub.samoloty.render;
 
 import android.opengl.GLES20;
 import android.util.Log;
@@ -22,7 +22,7 @@ import com.vuforia.PIXEL_FORMAT;
  * creating textures, and OpenGL error checking
  */
 @SuppressWarnings({"unused", "SuspiciousNameCombination"})
-public class SampleUtils {
+public class RenderUtils {
 
     private static final String LOGTAG = "SampleUtils";
 
@@ -54,8 +54,7 @@ public class SampleUtils {
     public static int createProgramFromShaderSrc(String vertexShaderSrc,
                                                  String fragmentShaderSrc) {
         int vertShader = initShader(GLES20.GL_VERTEX_SHADER, vertexShaderSrc);
-        int fragShader = initShader(GLES20.GL_FRAGMENT_SHADER,
-                fragmentShaderSrc);
+        int fragShader = initShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderSrc);
 
         if (vertShader == 0 || fragShader == 0)
             return 0;
