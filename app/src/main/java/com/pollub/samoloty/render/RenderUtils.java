@@ -50,7 +50,6 @@ public class RenderUtils {
         return shader;
     }
 
-
     public static int createProgramFromShaderSrc(String vertexShaderSrc,
                                                  String fragmentShaderSrc) {
         int vertShader = initShader(GLES20.GL_VERTEX_SHADER, vertexShaderSrc);

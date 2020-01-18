@@ -34,9 +34,6 @@ import java.util.*
 
 class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
 
-    //TODO zrobic pobieranie wspolrzednych z ModelRenderer co kilka sekund
-    // i sprawdzac czy dobrze ustawione w GameManager
-
     private lateinit var viewModel: CameraActivityViewModel
     private val gameStateManager: GameManager = GameManager()
 
@@ -62,13 +59,13 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
     private var mStatusDelayTimer: Timer? = null
 
     private var mCurrentStatusInfo: Int = 0
-
+/*
     private val handler = Handler()
 
     private fun onGameCompleted() {
         AlertDialog.Builder(this).setMessage("Wygrane").create().show()
-    }
-
+    }*/
+/*
     private val checkOrder = object : Runnable {
 
         override fun run() {
@@ -82,7 +79,7 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
                 handler.postDelayed(this, 2000)
         }
     }
-
+*/
     val loadingDialogHandler = LoadingDialogHandler(this)
 
     // Alert Dialog used to display SDK errors
@@ -207,7 +204,6 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
         val stencilSize = 0
         val translucent = Vuforia.requiresAlpha()
 
-
         mGlView = GLView(applicationContext)
         mGlView!!.init(translucent, depthSize, stencilSize)
 
@@ -240,7 +236,7 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
         vuforiaAppSession!!.startAR()
 
         //TODO
-        handler.post(checkOrder)
+      //  handler.post(checkOrder)
     }
 
     private fun startLoadingAnimation() {
