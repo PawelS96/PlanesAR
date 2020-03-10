@@ -227,6 +227,7 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
         // Sets the UILayout to be drawn in front of the camera
         mUILayout!!.bringToFront()
         mUILayout!!.setBackgroundColor(Color.TRANSPARENT)
+        showGrid(true)
 
         appMenu = SampleAppMenu(this@CameraActivity,
                 this@CameraActivity, "Samoloty",
@@ -431,7 +432,10 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
 
     private fun setMenuToggle(view: View?, value: Boolean) {
         // OnCheckedChangeListener is called upon changing the checked state
-        (view as Switch).isChecked = value
+        (view as? Switch)?.isChecked = value
+    }
+    private fun showGrid(show: Boolean){
+        findViewById<Grid>(R.id.grid).visibility = if (show) View.VISIBLE else View.INVISIBLE
     }
 
     // In this function you can define the desired behavior for each menu option
