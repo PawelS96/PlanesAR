@@ -15,4 +15,7 @@ interface PlaneDAO {
 
     @Query("SELECT count(*) FROM Plane")
     fun count(): Int
+
+    @Query("DELETE FROM Plane")
+    fun clear()
 }
