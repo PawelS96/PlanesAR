@@ -1,6 +1,7 @@
 package com.pollub.samoloty
 
 import android.content.res.AssetManager
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -35,6 +36,8 @@ class CameraActivityViewModel : ViewModel() {
             //pobranie z bazy danych obiektów zawierających dane o samolotach
             val planes = Repository.getAll()
 
+            Log.d("dbCount", planes.size.toString())
+
             //powiadomienie o wczytaniu samolotów (główny wątek)
             withContext(Dispatchers.Main) { planesData.value = planes }
 
@@ -45,13 +48,15 @@ class CameraActivityViewModel : ViewModel() {
 
                 val model = ObjModel()
                 try {
-                    model.loadModel(assets, plane.modelFilename)
-                } catch (e: IOException) {
+                    val modelPath = "models/" + plane.modelFilename
+                    model.loadModel(assets, modelPath)
+                } catch (e: Exception) {
                     e.printStackTrace()
                     return@forEach
                 }
 
-                val texture = Texture.loadTextureFromApk(plane.textureFilename, assets)
+                val texturePath = "textures/" + plane.textureFilename
+                val texture = Texture.loadTextureFromApk(texturePath, assets)
                 data.add(RenderData(plane.targetName, model, texture!!))
             }
 
