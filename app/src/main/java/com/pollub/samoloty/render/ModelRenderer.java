@@ -65,7 +65,7 @@ public class ModelRenderer implements RendererControl, GLSurfaceView.Renderer {
             dataMap.put(data.getTargetName(), pair);
         });
     }
-    /*
+
     public List<String> getSortedTargets() {
 
         return new ArrayList<>(coordinates.entrySet())
@@ -74,7 +74,7 @@ public class ModelRenderer implements RendererControl, GLSurfaceView.Renderer {
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
     }
-*/
+
     public void clear() {
         dataMap.clear();
         dataMap = null;
