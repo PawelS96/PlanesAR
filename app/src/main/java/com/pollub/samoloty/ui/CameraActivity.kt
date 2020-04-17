@@ -1,7 +1,9 @@
 package com.pollub.samoloty.ui
 
+import android.Manifest
 import android.app.AlertDialog
 import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
@@ -30,7 +32,9 @@ import com.pollub.samoloty.utils.Timer
 import com.vuforia.*
 import com.vuforia.artest.R
 import java.lang.ref.WeakReference
+import java.security.Permission
 import java.util.*
+import kotlin.system.exitProcess
 
 class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
 
@@ -88,43 +92,7 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(LOGTAG, "onCreate")
         super.onCreate(savedInstanceState)
-
-        vuforiaAppSession = ArSession(this)
-
-        startLoadingAnimation()
-
-        vuforiaAppSession!!.initAR(this, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-        mGestureDetector = GestureDetector(applicationContext, GestureListener(this))
-
-        // Relocalization timer and message
-        mPopupMessage = PopupMessage(this, mUILayout!!, mUILayout!!.findViewById(R.id.topbar_layout), false)
-
-        mRelocalizationTimer = object : Timer(10000, 1000) {
-            override fun onFinish() {
-                vuforiaAppSession?.resetDeviceTracker()
-                super.onFinish()
-            }
-        }
-
-        mStatusDelayTimer = object : Timer(1000, 1000) {
-            override fun onFinish() {
-                if (mRenderer!!.isTargetCurrentlyTracked) {
-                    super.onFinish()
-                    return
-                }
-
-                if (!mRelocalizationTimer!!.isRunning) {
-                    mRelocalizationTimer!!.startTimer()
-                }
-
-                runOnUiThread { mPopupMessage!!.show(getString(R.string.instruct_relocalize)) }
-
-                super.onFinish()
-            }
-        }
-        viewModel = ViewModelProviders.of(this)[CameraActivityViewModel::class.java]
-        viewModel.getPlanes().observe(this, Observer { gameStateManager.setPlanes(it) })
-        viewModel.getRenderData().observe(this, Observer { onDataLoaded(it) })
+        checkPermissions()
     }
 
     private inner class GestureListener(activity: CameraActivity) : GestureDetector.SimpleOnGestureListener() {
@@ -161,9 +129,75 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
     override fun onResume() {
         Log.d(LOGTAG, "onResume")
         super.onResume()
-        showProgressIndicator(true)
-        vuforiaAppSession!!.onResume()
+
+        if(cameraReady) {
+            showProgressIndicator(true)
+            vuforiaAppSession!!.onResume()
+        }
     }
+
+    private fun checkPermissions(){
+
+        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
+            requestPermissions(arrayOf(Manifest.permission.CAMERA), cameraRequestCode)
+        else
+            onCameraReady()
+    }
+
+    private fun onCameraReady(){
+        startLoadingAnimation()
+        vuforiaAppSession = ArSession(this)
+        vuforiaAppSession!!.initAR(this, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+
+        mGestureDetector = GestureDetector(applicationContext, GestureListener(this))
+
+        // Relocalization timer and message
+        mPopupMessage = PopupMessage(this, mUILayout!!, mUILayout!!.findViewById(R.id.topbar_layout), false)
+
+        mRelocalizationTimer = object : Timer(10000, 1000) {
+            override fun onFinish() {
+                vuforiaAppSession?.resetDeviceTracker()
+                super.onFinish()
+            }
+        }
+
+        mStatusDelayTimer = object : Timer(1000, 1000) {
+            override fun onFinish() {
+                if (mRenderer!!.isTargetCurrentlyTracked) {
+                    super.onFinish()
+                    return
+                }
+
+                if (!mRelocalizationTimer!!.isRunning) {
+                    mRelocalizationTimer!!.startTimer()
+                }
+
+                runOnUiThread { mPopupMessage!!.show(getString(R.string.instruct_relocalize)) }
+
+                super.onFinish()
+            }
+        }
+        viewModel = ViewModelProviders.of(this)[CameraActivityViewModel::class.java]
+        viewModel.getPlanes().observe(this, Observer { gameStateManager.setPlanes(it) })
+        viewModel.getRenderData().observe(this, Observer { onDataLoaded(it) })
+
+        cameraReady = true
+    }
+
+    var cameraReady = false
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (requestCode == cameraRequestCode){
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                onCameraReady()
+            else
+                exitProcess(0)
+        }
+    }
+
+    private val cameraRequestCode = 1
 
     // Called whenever the device orientation or screen resolution changes
     override fun onConfigurationChanged(config: Configuration) {
@@ -181,7 +215,7 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
             onPause()
         }
 
-        vuforiaAppSession!!.onPause()
+        vuforiaAppSession?.onPause()
     }
 
     override fun onDestroy() {
@@ -194,7 +228,7 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
             Log.e(LOGTAG, e.string)
         }
 
-        mRenderer!!.clear()
+        mRenderer?.clear()
         System.gc()
     }
 
