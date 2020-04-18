@@ -1,6 +1,13 @@
+/app/build/
+/.gradle/
+/.idea/
+/SamolotyAR.iml
+/local.properties
+
+
+
 *.iml
 .gradle
-/local.properties
 /.idea/workspace.xml
 /.idea/libraries
 .DS_Store
