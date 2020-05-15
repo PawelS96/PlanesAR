@@ -41,7 +41,8 @@ import kotlin.system.exitProcess
 class CameraActivity : AppCompatActivity(), Control,
         SampleAppMenuInterface,
         VictoryDialog.VictoryDialogCallback,
-GameModeDialog.GameModeDialogCallback{
+GameModeDialog.GameModeDialogCallback,
+MainMenuFragment.MainMenuCallback{
 
     private val testing = false
 
@@ -81,11 +82,28 @@ GameModeDialog.GameModeDialogCallback{
     }
 
     override fun onPlayAgain() {
-        GameModeDialog().show(supportFragmentManager, GameModeDialog.TAG)
+        showSortModeSelection()
     }
 
-    override fun onModeSelected(mode: GameMode) {
-        gameStateManager.gameMode = mode
+    private fun showSortModeSelection(){
+        GameModeDialog().show(supportFragmentManager, GameModeDialog.TAG)
+
+    }
+
+    override fun onGameModeSelected(gameMode: GameMode) {
+        showMainMenu(false)
+
+        when(gameMode){
+
+            GameMode.MODE_LEVELS -> {}
+            GameMode.MODE_FREE -> {
+                showSortModeSelection()
+            }
+        }
+    }
+
+    override fun onSortModeSelected(mode: SortMode) {
+        gameStateManager.sortMode = mode
 
         bottom_bar.visibility = View.VISIBLE
 
@@ -278,6 +296,19 @@ GameModeDialog.GameModeDialogCallback{
         mGlView?.preserveEGLContextOnPause = true
     }
 
+    private fun showMainMenu(show: Boolean){
+        if (show){
+
+            MainMenuFragment().show(supportFragmentManager, MainMenuFragment.TAG)
+        }
+        else {
+            val fragment = supportFragmentManager.findFragmentByTag(MainMenuFragment.TAG)
+            fragment?.let {
+                supportFragmentManager.beginTransaction().remove(it).commit()
+            }
+        }
+    }
+
     private fun onDataLoaded(data: List<RenderData>) {
 
         loading_progress.visibility = View.GONE
@@ -305,8 +336,8 @@ GameModeDialog.GameModeDialogCallback{
         setSideMenuSettings()
         vuforiaAppSession?.startAR()
 
-        if (!testing)
-            onPlayAgain()
+        //if (!testing)
+         //   showMainMenu(true)
     }
 
     private fun startLoadingAnimation() {
