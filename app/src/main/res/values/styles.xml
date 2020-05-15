@@ -3,10 +3,53 @@
 
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowNoTitle">true</item>
-        <item name="android:windowBackground">@color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
         <item name="android:windowActionBar">false</item>
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
+        <item name="android:navigationBarColor">@color/colorPrimaryDark</item>
+    </style>
+
+    <style name="CustomDialogTheme" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="colorAccent">@color/colorFont</item>
+        <item name="android:textColorHighlight">@color/colorPrimaryDark</item>
+        <item name="android:background">@drawable/dialog_background</item>
+        <item name="android:textColor">@color/colorFont</item>
+        <item name="android:textColorPrimary">@color/colorFont</item>
+        <item name="android:textColorPrimaryDisableOnly">@color/colorPrimaryDark</item>
+    </style>
+
+    <style name="RoundedButton">
+        <item name="android:minHeight">0dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:padding">3dp</item>
+        <item name="android:paddingStart">5dp</item>
+        <item name="android:paddingEnd">5dp</item>
+
+        <item name="android:background">@drawable/round_backgr</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/colorFont</item>
+    </style>
+
+    <style name="ListItem">
+        <item name="android:minHeight">40dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:padding">3dp</item>
+        <item name="android:paddingStart">5dp</item>
+        <item name="android:paddingEnd">5dp</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:layout_margin">5dp</item>
+
+        <item name="android:background">@drawable/round_backgr</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/colorFont</item>
     </style>
 
 </resources>

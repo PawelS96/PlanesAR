@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <TextView
+            android:text="ZWYCIĘSTWO!"
+            android:textAlignment="center"
+            android:gravity="center_horizontal"
+            android:textSize="50sp"
+            android:textColor="@color/colorFont"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+    <RelativeLayout
+            android:layout_marginTop="50dp"
+            android:layout_width="match_parent"
+                  android:layout_height="match_parent">
+
+
+        <Button
+                android:text="GRAJ PONOWNIE"
+                android:id="@+id/button_play_again"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+        style="@style/RoundedButton"
+                android:layout_toStartOf="@id/center"
+                android:layout_marginStart="40dp"
+
+        />
+
+        <View
+                android:id="@+id/center"
+                android:layout_margin="20dp"
+                android:layout_width="0dp"
+              android:layout_height="0dp"
+        android:layout_centerHorizontal="true"
+
+
+        />
+
+
+
+        <Button
+                android:text="WYJDŹ"
+                android:layout_marginEnd="40dp"
+                android:layout_toEndOf="@id/center"
+                android:id="@+id/button_exit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/RoundedButton"
+
+
+        />
+
+
+
+
+
+    </RelativeLayout>
+
+</LinearLayout>

@@ -101,7 +101,6 @@ public class PopupMessage {
         return mTextMessageView.getText().toString();
     }
 
-
     public boolean isHidden() {
         return mView.getVisibility() != View.VISIBLE;
     }

@@ -21,13 +21,13 @@ class SampleAppMenuAnimator extends ValueAnimator implements
 {
     
     private static final long MENU_ANIMATION_DURATION = 300;
-    private final SampleAppMenu mSampleAppMenu;
+    private final SideMenu mSideMenu;
     private float mMaxX;
     private float mEndX;
     
-    SampleAppMenuAnimator(SampleAppMenu menu)
+    SampleAppMenuAnimator(SideMenu menu)
     {
-        mSampleAppMenu = menu;
+        mSideMenu = menu;
         setDuration(MENU_ANIMATION_DURATION);
         addUpdateListener(this);
         addListener(this);
@@ -38,7 +38,7 @@ class SampleAppMenuAnimator extends ValueAnimator implements
     public void onAnimationUpdate(ValueAnimator animation)
     {
         Float f = (Float) animation.getAnimatedValue();
-        mSampleAppMenu.setAnimationX(f);
+        mSideMenu.setAnimationX(f);
     }
     
     
@@ -51,9 +51,9 @@ class SampleAppMenuAnimator extends ValueAnimator implements
     @Override
     public void onAnimationEnd(Animator animation)
     {
-        mSampleAppMenu.setDockMenu(mEndX == mMaxX);
+        mSideMenu.setDockMenu(mEndX == mMaxX);
         if (mEndX == 0)
-            mSampleAppMenu.hide();
+            mSideMenu.hide();
     }
     
     

@@ -9,7 +9,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAlignment="center"
-        android:textColor="@color/white"
+        android:textColor="@color/colorFont"
         android:gravity="center"
         android:layout_centerInParent="true"
         android:background="@drawable/sample_app_toast_background"

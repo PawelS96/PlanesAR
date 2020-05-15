@@ -4,7 +4,7 @@ object Repository {
 
     private lateinit var planeDAO: PlaneDAO
 
-    fun create(database: DatabaseAccess){
+    fun create(database: PlaneDatabase){
         planeDAO = database.planeDAO()
     }
 

@@ -57,6 +57,9 @@ public class ObjModel extends Model {
         InputStream is = assetManager.open(filename);;
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 
+        int line = 0;
+        String str = "0";
+
         try {
             ArrayList<Float> vlist = new ArrayList<>();
             ArrayList<Float> tlist = new ArrayList<>();
@@ -67,15 +70,16 @@ public class ObjModel extends Model {
             int numNormals = 0;
             int numFaces = 0;
 
-            String str;
             String[] tmp;
 
             reader = new BufferedReader(new InputStreamReader(is), BUFFER_READER_SIZE);
 
             while ((str = reader.readLine()) != null) {
 
-                // Replace double spaces. Some files may have it. Ex. files from 3ds max.
-             //   str = str.replace("  ", " ");
+                line++;
+                if (str.isEmpty()) continue;
+
+                str = str.replace("  ", " ");
                 tmp = str.split(" ");
 
                 if (tmp[0].equalsIgnoreCase("v")) {
@@ -118,7 +122,7 @@ public class ObjModel extends Model {
 
                     numFaces++;
 
-                    if (tmp.length > 4 && !tmp[4].equals("")) {
+                    if (tmp.length > 4 && !tmp[4].isEmpty()) {
 
                         for (int i = 1; i < 5; i++) {
                             ftmp = tmp[i].split("/");
@@ -195,7 +199,13 @@ public class ObjModel extends Model {
 
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
+        }
+        catch (Exception e){
+            Log.d("errorLine2", e.getMessage());
+            Log.e("errorLine", str + " " + line);
+        }
+
+        finally {
             try {
                 reader.close();
             } catch (IOException e) {

@@ -16,11 +16,6 @@ import com.pollub.samoloty.render.Texture;
 import com.vuforia.Image;
 import com.vuforia.PIXEL_FORMAT;
 
-/**
- * Support class for the Vuforia sample applications
- * Contains helper functions for initializing shaders,
- * creating textures, and OpenGL error checking
- */
 @SuppressWarnings({"unused", "SuspiciousNameCombination"})
 public class RenderUtils {
 

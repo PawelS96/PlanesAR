@@ -19,11 +19,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import com.google.android.material.snackbar.Snackbar
 import com.pollub.samoloty.*
 import com.pollub.samoloty.render.ModelRenderer
 import com.pollub.samoloty.render.RenderData
-import com.pollub.samoloty.ui.menu.SampleAppMenu
-import com.pollub.samoloty.ui.menu.SampleAppMenuGroup
+import com.pollub.samoloty.ui.menu.SideMenu
+import com.pollub.samoloty.ui.menu.SideMenuGroup
 import com.pollub.samoloty.ui.menu.SampleAppMenuInterface
 import com.pollub.samoloty.utils.LoadingDialogHandler
 import com.pollub.samoloty.utils.LoadingDialogHandler.HIDE_LOADING_DIALOG
@@ -31,12 +32,18 @@ import com.pollub.samoloty.utils.LoadingDialogHandler.SHOW_LOADING_DIALOG
 import com.pollub.samoloty.utils.Timer
 import com.vuforia.*
 import com.vuforia.artest.R
+import kotlinx.android.synthetic.main.bottom_bar.*
+import kotlinx.android.synthetic.main.camera_overlay.*
 import java.lang.ref.WeakReference
-import java.security.Permission
 import java.util.*
 import kotlin.system.exitProcess
 
-class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
+class CameraActivity : AppCompatActivity(), Control,
+        SampleAppMenuInterface,
+        VictoryDialog.VictoryDialogCallback,
+GameModeDialog.GameModeDialogCallback{
+
+    private val testing = false
 
     private lateinit var viewModel: CameraActivityViewModel
     private val gameStateManager: GameManager = GameManager()
@@ -52,30 +59,49 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
     private var mContAutofocus = true
 
     private var mFocusOptionView: View? = null
+    private var mGridOptionView: View? = null
 
     private var mUILayout: RelativeLayout? = null
 
-    private var appMenu: SampleAppMenu? = null
-    internal var mSettingsAdditionalViews = ArrayList<View>()
+    private var sideMenu: SideMenu? = null
+    private var mSettingsAdditionalViews = ArrayList<View>()
 
     private var mPopupMessage: PopupMessage? = null
     private var mRelocalizationTimer: Timer? = null
     private var mStatusDelayTimer: Timer? = null
 
     private var mCurrentStatusInfo: Int = 0
-/*
+
     private val handler = Handler()
 
     private fun onGameCompleted() {
-        AlertDialog.Builder(this).setMessage("Wygrane").create().show()
-    }*/
-/*
+        handler.removeCallbacks(checkOrder)
+        mRenderer?.resetCoordinates()
+        VictoryDialog().show(supportFragmentManager, VictoryDialog.TAG)
+    }
+
+    override fun onPlayAgain() {
+        GameModeDialog().show(supportFragmentManager, GameModeDialog.TAG)
+    }
+
+    override fun onModeSelected(mode: GameMode) {
+        gameStateManager.gameMode = mode
+
+        bottom_bar.visibility = View.VISIBLE
+
+        if (!testing)
+        handler.postDelayed(checkOrder, 2000)
+    }
+
     private val checkOrder = object : Runnable {
 
         override fun run() {
 
-            val targets = mRenderer!!.sortedTargets
-            val isOrderCorrect =  gameStateManager.isOrderCorrect(targets)
+            val targets = mRenderer!!.getSortedTargets()
+            Log.d("targetsOrder", targets.toString())
+            val isOrderCorrect = gameStateManager.isOrderCorrect(targets)
+
+            Log.d("poprawne ulozenie", isOrderCorrect.toString())
 
             if (isOrderCorrect)
                 onGameCompleted()
@@ -83,7 +109,7 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
                 handler.postDelayed(this, 2000)
         }
     }
-*/
+
     val loadingDialogHandler = LoadingDialogHandler(this)
 
     // Alert Dialog used to display SDK errors
@@ -93,6 +119,10 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
         Log.d(LOGTAG, "onCreate")
         super.onCreate(savedInstanceState)
         checkPermissions()
+
+        button_help.setOnClickListener { Snackbar.make(mUILayout!!, gameStateManager.getObjective(), 5000).show() }
+        button_more.setOnClickListener { onPlayAgain() }
+
     }
 
     private inner class GestureListener(activity: CameraActivity) : GestureDetector.SimpleOnGestureListener() {
@@ -132,7 +162,7 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
 
         if(cameraReady) {
             showProgressIndicator(true)
-            vuforiaAppSession!!.onResume()
+            vuforiaAppSession?.onResume()
         }
     }
 
@@ -147,7 +177,7 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
     private fun onCameraReady(){
         startLoadingAnimation()
         vuforiaAppSession = ArSession(this)
-        vuforiaAppSession!!.initAR(this, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+        vuforiaAppSession?.initAR(this, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
 
         mGestureDetector = GestureDetector(applicationContext, GestureListener(this))
 
@@ -180,6 +210,7 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
         viewModel = ViewModelProviders.of(this)[CameraActivityViewModel::class.java]
         viewModel.getPlanes().observe(this, Observer { gameStateManager.setPlanes(it) })
         viewModel.getRenderData().observe(this, Observer { onDataLoaded(it) })
+        viewModel.getLoadProgress().observe(this, Observer { list -> loading_progress.text = "${list[0]} z ${list[1]}" })
 
         cameraReady = true
     }
@@ -203,7 +234,7 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
     override fun onConfigurationChanged(config: Configuration) {
         Log.d(LOGTAG, "onConfigurationChanged")
         super.onConfigurationChanged(config)
-        vuforiaAppSession!!.onConfigurationChanged()
+        vuforiaAppSession?.onConfigurationChanged()
     }
 
     override fun onPause() {
@@ -223,7 +254,7 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
         super.onDestroy()
 
         try {
-            vuforiaAppSession!!.stopAR()
+            vuforiaAppSession?.stopAR()
         } catch (e: ArException) {
             Log.e(LOGTAG, e.string)
         }
@@ -239,39 +270,43 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
         val translucent = Vuforia.requiresAlpha()
 
         mGlView = GLView(applicationContext)
-        mGlView!!.init(translucent, depthSize, stencilSize)
+        mGlView?.init(translucent, depthSize, stencilSize)
 
-        mRenderer = ModelRenderer(this, vuforiaAppSession)
+        mRenderer = ModelRenderer(this, vuforiaAppSession!!)
 
-        mGlView!!.setRenderer(mRenderer)
-        mGlView!!.preserveEGLContextOnPause = true
+        mGlView?.setRenderer(mRenderer)
+        mGlView?.preserveEGLContextOnPause = true
     }
 
     private fun onDataLoaded(data: List<RenderData>) {
 
-        mRenderer!!.setRenderData(data)
-        mRenderer!!.setActive(true)
+        loading_progress.visibility = View.GONE
+        loading_label.visibility = View.GONE
+
+        mRenderer?.setRenderData(data)
+        mRenderer?.setActive(true)
 
         // Now add the GL surface view. It is important
         // that the OpenGL ES surface view gets added
         // BEFORE the camera is started and video
         // background is configured.
-        addContentView(mGlView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+        mGlView?.let {
+            addContentView(mGlView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+        }
 
         // Sets the UILayout to be drawn in front of the camera
-        mUILayout!!.bringToFront()
-        mUILayout!!.setBackgroundColor(Color.TRANSPARENT)
-        showGrid(true)
+        mUILayout?.bringToFront()
+        mUILayout?.setBackgroundColor(Color.TRANSPARENT)
 
-        appMenu = SampleAppMenu(this@CameraActivity,
+        sideMenu = SideMenu(this@CameraActivity,
                 this@CameraActivity, "Samoloty",
                 mGlView, mUILayout!!, mSettingsAdditionalViews)
-        setSampleAppMenuSettings()
 
-        vuforiaAppSession!!.startAR()
+        setSideMenuSettings()
+        vuforiaAppSession?.startAR()
 
-        //TODO
-      //  handler.post(checkOrder)
+        if (!testing)
+            onPlayAgain()
     }
 
     private fun startLoadingAnimation() {
@@ -295,14 +330,14 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
     }
 
     override fun doLoadTrackersData(): Boolean {
+
+        val dataSet = "PlanesDatabase.xml"
         val tManager = TrackerManager.getInstance()
-        val objectTracker = tManager.getTracker(ObjectTracker.getClassType()) as ObjectTracker? ?: return false
+        val objectTracker = tManager.getTracker(ObjectTracker.getClassType())
+                as ObjectTracker? ?: return false
 
         if (mCurrentDataset == null)
-            mCurrentDataset = objectTracker.createDataSet()
-
-        if (mCurrentDataset == null)
-            return false
+            mCurrentDataset = objectTracker.createDataSet() ?: return false
 
         if (!mCurrentDataset!!.load(dataSet, STORAGE_TYPE.STORAGE_APPRESOURCE))
             return false
@@ -310,11 +345,9 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
         if (!objectTracker.activateDataSet(mCurrentDataset))
             return false
 
-        val trackableList = mCurrentDataset!!.trackables
-        for (trackable in trackableList) {
+        for (trackable in mCurrentDataset!!.trackables) {
             val name = "Current Dataset : " + trackable.name
             trackable.userData = name
-            Log.d(LOGTAG, "UserData:Set the following user data " + trackable.userData)
         }
         return true
     }
@@ -367,6 +400,8 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
 
         showProgressIndicator(false)
     }
+
+    private var isGridVisible = false
 
     private fun showProgressIndicator(show: Boolean) {
         val message = if (show) SHOW_LOADING_DIALOG else HIDE_LOADING_DIALOG
@@ -455,20 +490,24 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         // Process the Gestures
-        return appMenu != null && appMenu!!.processEvent(event) || mGestureDetector!!.onTouchEvent(event)
+        return sideMenu != null && sideMenu!!.processEvent(event) || mGestureDetector!!.onTouchEvent(event)
     }
 
-    private fun setSampleAppMenuSettings() {
-        val group: SampleAppMenuGroup = appMenu!!.addGroup(getString(R.string.menu_camera), true)
+    private fun setSideMenuSettings() {
+        val group: SideMenuGroup = sideMenu!!.addGroup(getString(R.string.menu_camera), true)
         mFocusOptionView = group.addSelectionItem(getString(R.string.menu_contAutofocus), CMD_AUTOFOCUS, mContAutofocus)
-        appMenu!!.attachMenu()
+        mGridOptionView = group.addSelectionItem("Siatka", CMD_GRID, isGridVisible)
+        sideMenu?.attachMenu()
     }
 
     private fun setMenuToggle(view: View?, value: Boolean) {
         // OnCheckedChangeListener is called upon changing the checked state
         (view as? Switch)?.isChecked = value
     }
+
     private fun showGrid(show: Boolean){
+        isGridVisible = show
+        setMenuToggle(mGridOptionView, show)
         findViewById<Grid>(R.id.grid).visibility = if (show) View.VISIBLE else View.INVISIBLE
     }
 
@@ -479,6 +518,7 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
 
         when (command) {
             CMD_BACK -> finish()
+            CMD_GRID -> showGrid(!isGridVisible)
 
             CMD_AUTOFOCUS ->
 
@@ -517,8 +557,8 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
 
         if (mCurrentStatusInfo == TrackableResult.STATUS_INFO.RELOCALIZING) {
             // If the status is RELOCALIZING, start the timer
-            if (!mStatusDelayTimer!!.isRunning) {
-                mStatusDelayTimer!!.startTimer()
+            if (!mStatusDelayTimer?.isRunning!!) {
+                mStatusDelayTimer?.startTimer()
             }
         } else {
             // If the status is not RELOCALIZING, stop the timers and hide the message
@@ -551,7 +591,6 @@ class CameraActivity : AppCompatActivity(), Control, SampleAppMenuInterface {
 
         private val CMD_BACK = -1
         private val CMD_AUTOFOCUS = 2
-
-        const val dataSet = "PlanesDatabase.xml"
+        private val CMD_GRID = 3
     }
 }

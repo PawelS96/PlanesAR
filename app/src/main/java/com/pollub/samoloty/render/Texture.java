@@ -55,7 +55,6 @@ public class Texture {
         }
     }
 
-
     private static Texture loadTextureFromIntBuffer(int[] data, int width,
                                                     int height) {
         // Convert:

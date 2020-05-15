@@ -11,7 +11,7 @@
         android:layout_marginLeft="10dp"
         android:layout_marginStart="10dp"
         android:paddingTop="32dip"
-        android:textColor="@color/gray"
+        android:textColor="@color/colorAccentLight"
         />
     
     <View

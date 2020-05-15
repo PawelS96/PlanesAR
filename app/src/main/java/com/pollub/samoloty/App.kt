@@ -1,7 +1,7 @@
 package com.pollub.samoloty
 
 import android.app.Application
-import com.pollub.samoloty.database.DatabaseAccess
+import com.pollub.samoloty.database.PlaneDatabase
 import com.pollub.samoloty.database.Repository
 
 class App : Application(){
@@ -9,7 +9,7 @@ class App : Application(){
     override fun onCreate() {
         super.onCreate()
 
-        val database = DatabaseAccess.getDatabase(this)
+        val database = PlaneDatabase.getDatabase(this)
         Repository.create(database)
     }
 }
