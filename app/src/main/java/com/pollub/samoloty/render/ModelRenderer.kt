@@ -44,7 +44,7 @@ class ModelRenderer(activity: CameraActivity, session: ArSession) : RendererCont
         dataMap = dataList.associateBy { it.targetName }.toMutableMap()
     }
 
-    fun resetCoordinates(){
+    fun resetCoordinates() {
         coordinates.clear()
     }
 
@@ -121,15 +121,37 @@ class ModelRenderer(activity: CameraActivity, session: ArSession) : RendererCont
         texSampler2DHandle = GLES20.glGetUniformLocation(shaderProgramID, "texSampler2D")
     }
 
+    private val ALIGN_VERTICAL = 0
+    private val ALIGN_FLAT = 1
+
+    private val displayMode = ALIGN_FLAT
+
+    var x = 0f
+    var y = 90f
+    var z = 90f
+
     private fun renderModel(renderData: RenderData,
                             projectionMatrix: FloatArray, viewMatrix: FloatArray, modelMatrix: FloatArray) {
 
-        val (_, model, texture, scale, rotation, multiplier) = renderData
+        var (_, model, texture, scale, rotation, multiplier) = renderData
 
         val modelViewProjection = FloatArray(16)
-        Matrix.rotateM(modelMatrix, 0, 180f + rotation, 0f, 1f, 0f)
-        Matrix.translateM(modelMatrix, 0, 0f, 0f, -0.2f)
-        Matrix.scaleM(modelMatrix, 0, OBJECT_BASE_SCALE * scale, OBJECT_BASE_SCALE * scale, OBJECT_BASE_SCALE * scale)
+        scale *= OBJECT_BASE_SCALE
+
+
+        when (displayMode) {
+            ALIGN_FLAT -> {
+
+                Matrix.rotateM(modelMatrix, 0, x, 1f, 0f, 0f)
+                Matrix.rotateM(modelMatrix, 0, y, 0f, 1f, 0f)
+                Matrix.rotateM(modelMatrix, 0, z, 0f, 0f, 1f)
+
+            }
+            ALIGN_VERTICAL -> Matrix.rotateM(modelMatrix, 0, 180f + rotation, 0f, 0f, 0f)
+        }
+
+        Matrix.translateM(modelMatrix, 0, 0f, 0f, 0f)
+        Matrix.scaleM(modelMatrix, 0, scale, scale, scale)
         // Combine device pose (view matrix) with model matrix
         Matrix.multiplyMM(modelMatrix, 0, viewMatrix, 0, modelMatrix, 0)
         // Do the final combination with the projection matrix

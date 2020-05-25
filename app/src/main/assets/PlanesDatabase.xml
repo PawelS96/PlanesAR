@@ -1,17 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<QCARConfig
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="qcar_config.xsd">
+<QCARConfig xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="qcar_config.xsd">
   <Tracking>
-    <ImageTarget name="ju87" size="0.5 0.5" />
-    <ImageTarget name="f1camel" size="0.5 0.5" />
-    <ImageTarget name="t18" size="0.5 0.5" />
-    <ImageTarget name="b17" size="0.5 0.5" />
     <ImageTarget name="Spitfire" size="0.5 0.5" />
-    <ImageTarget name="P39" size="0.5 0.5" />
     <ImageTarget name="Republic_P-47_Thunderbolt" size="0.5 0.5" />
-    <ImageTarget name="Dorand_AR1" size="0.5 0.5" />
-    <ImageTarget name="Arsenal_VG_33" size="0.5 0.5" />
+    <ImageTarget name="P39" size="0.5 0.5" />
     <ImageTarget name="North_American_T-6_Texan" size="0.5 0.5" />
+    <ImageTarget name="ju87" size="0.5 0.5" />
+    <ImageTarget name="Arsenal_VG_33" size="0.5 0.5" />
   </Tracking>
 </QCARConfig>

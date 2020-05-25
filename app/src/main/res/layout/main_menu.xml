@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/colorPrimaryDark">
+        <Button
+                android:id="@+id/button_mode1"
+                android:text="@string/mode_free"
+                android:layout_above="@id/button_mode2"
+                style="@style/RoundedButton.MainMenu"/>
+        <Button
+                android:id="@+id/button_mode2"
+                android:text="@string/mode_random"
+                android:layout_above="@id/center"
+                style="@style/RoundedButton.MainMenu"/>
+        <View
+                android:id="@+id/center"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_centerInParent="true"/>
+        <Button
+                android:id="@+id/button_tutorial"
+                android:text="@string/game_rules"
+                android:layout_below="@id/center"
+                style="@style/RoundedButton.MainMenu"
+        />
+        <Button
+                android:id="@+id/button_exit_main"
+                android:text="@string/exit"
+                android:layout_below="@id/button_tutorial"
+                style="@style/RoundedButton.MainMenu"/>
+
+</RelativeLayout>

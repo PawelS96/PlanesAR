@@ -1,81 +1,119 @@
 package com.pollub.samoloty
 
-import android.util.Log
 import com.pollub.samoloty.database.Plane
+import java.io.Serializable
+import kotlin.random.Random
 
-class GameManager() {
+object GameManager {
 
     private lateinit var targetToPlaneMap: Map<String, Plane>
-    var gameMode: GameMode = GameMode.SORT_COUNTRY
+    var sortMode: SortMode = SortMode.SORT_COUNTRY
 
     fun setPlanes(planes: List<Plane>) {
         targetToPlaneMap = planes.associateBy { it.targetName }
     }
 
-    fun isOrderCorrect(targets: List<String>): Boolean {
+    private var correctOrder : List<Plane>? = null
 
-        return targets.containsAll(targetToPlaneMap.keys) && isOrderCorrect(getPlanesForTargets(targets), gameMode)
+    fun setCorrectOrder(targets: List<String>){
+        correctOrder = targets.map { targetToPlaneMap[it]!! }
     }
 
-    private fun getPlanesForTargets(targets: List<String>): List<Plane> = targets.map { targetToPlaneMap[it]!! }
+    fun getCorrectOrder() : List<Plane> = correctOrder!!
 
-    private fun isOrderCorrect(planes: List<Plane>, mode: GameMode): Boolean {
+    private var randomizedModes = mutableListOf<SortMode>()
 
-        when (mode) {
-            GameMode.SORT_YEAR -> {
+    fun setRandomSortMode() : SortMode {
 
-                Log.d("samoloty", planes.map { it.targetName + ": " + it.productionYear }.toString())
+        val selection: MutableList<SortMode>
 
-                planes.forEachIndexed { index, plane ->
+        if (randomizedModes.size == SortMode.values().size){
+            selection = randomizedModes.take(randomizedModes.size - 2).toMutableList()
+            randomizedModes.clear()
+        }
 
-                    if (index > 0 && planes[index - 1].productionYear >= plane.productionYear) {
-                        return false
-                    }
-                }
-            }
+        else {
+            selection = SortMode.values().toMutableList().apply { removeAll(randomizedModes) }
+        }
 
-            GameMode.SORT_SPEED -> {
-                Log.d("samoloty", planes.map { it.targetName + ": " + it.topSpeed }.toString())
+        sortMode = selection[Random.nextInt(selection.size - 1)]
+        randomizedModes.add(sortMode)
+        return sortMode
+    }
 
-                planes.forEachIndexed { index, plane ->
-                    if (index > 0 && planes[index - 1].topSpeed >= plane.topSpeed) {
-                        return false
-                    }
-                }
-            }
+    fun isOrderCorrect(targets: List<String>): Boolean {
 
-            GameMode.SORT_COUNTRY -> {
-                Log.d("samoloty", planes.map { it.targetName + ": " + it.country }.toString())
+        if (!targets.containsAll(targetToPlaneMap.keys) || targetToPlaneMap.isEmpty())
+            return false
 
+        val planes = targets.map { targetToPlaneMap[it]!! }
+
+        return when (sortMode) {
+            SortMode.SORT_COUNTRY -> {
                 val countries = planes.map { it.country }
-                return countries == countries.sorted()
+                countries == countries.sorted()
+            }
+            else -> checkOrderByNumber(planes, sortMode)
+        }
+    }
+
+    private fun checkOrderByNumber(planes: List<Plane>, mode: SortMode): Boolean {
+
+        planes.forEachIndexed { index, plane ->
+
+            if (index > 0) {
+
+                val firstPlaneInfo = planes[index - 1].getFieldForSorting<Int>(mode)
+                val secondPlaneInfo = plane.getFieldForSorting<Int>(mode)
+
+                if (firstPlaneInfo > secondPlaneInfo)
+                    return false
             }
         }
 
         return true
     }
 
-    fun getObjective() = gameMode.objective()
+    fun getObjective() = sortMode.objective()
 }
 
-enum class GameMode {
-    SORT_YEAR, SORT_SPEED, SORT_COUNTRY
+enum class SortMode {
+    SORT_YEAR, SORT_SPEED, SORT_COUNTRY, SORT_CREW, SORT_WEIGHT
 }
 
-fun GameMode.displayName() : String {
+enum class GameMode : Serializable {
+    MODE_FREE, MODE_LEVELS
+}
 
-    return when(this){
-        GameMode.SORT_YEAR -> "Według roku początku produkcji"
-        GameMode.SORT_SPEED -> "Według prędkości maksymalnej"
-        GameMode.SORT_COUNTRY -> "Według kraju pochodzenia"
+inline fun <reified T> Plane.getFieldForSorting(sortMode: SortMode): T {
+
+    return when (sortMode) {
+        SortMode.SORT_YEAR -> productionYear as T
+        SortMode.SORT_SPEED -> topSpeed as T
+        SortMode.SORT_COUNTRY -> country as T
+        SortMode.SORT_CREW -> crew as T
+        SortMode.SORT_WEIGHT -> weight as T
     }
 }
 
-fun GameMode.objective() : String {
+fun SortMode.displayName(): String {
 
-    return when(this){
-        GameMode.SORT_YEAR -> "Według roku początku produkcji"
-        GameMode.SORT_SPEED -> "Według prędkości maksymalnej"
-        GameMode.SORT_COUNTRY -> "Według kraju pochodzenia"
+    return when (this) {
+        SortMode.SORT_YEAR -> "Według roku początku produkcji"
+        SortMode.SORT_SPEED -> "Według prędkości maksymalnej"
+        SortMode.SORT_COUNTRY -> "Według kraju pochodzenia"
+        SortMode.SORT_CREW -> "Według liczby załogi"
+        SortMode.SORT_WEIGHT -> "Według masy startowej"
+    }
+}
+
+fun SortMode.objective(): String {
+
+    return when (this) {
+        SortMode.SORT_YEAR -> "Ustaw samoloty według roku początku produkcji"
+        SortMode.SORT_SPEED -> "Ustaw samoloty według prędkości maksymalnej"
+        SortMode.SORT_COUNTRY -> "Ustaw samoloty według kraju pochodzenia"
+        SortMode.SORT_CREW -> "Ustaw samoloty według liczby załogi"
+        SortMode.SORT_WEIGHT -> "Ustaw samoloty według masy startowej"
     }
 }

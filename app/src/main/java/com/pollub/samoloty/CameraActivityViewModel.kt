@@ -35,6 +35,10 @@ class CameraActivityViewModel : ViewModel() {
     //funkcja wczytująca potrzebne dane w oddzielnym wątku
     fun loadData(assets: AssetManager) {
 
+        if (renderData.value != null){
+            return
+        }
+
         viewModelScope.launch(Dispatchers.IO) {
 
             //pobranie z bazy danych obiektów zawierających dane o samolotach
@@ -62,6 +66,7 @@ class CameraActivityViewModel : ViewModel() {
                 val texturePath = "textures/" + plane.textureFilename
                 val texture: Texture = textures[texturePath]
                         ?: Texture.loadTextureFromApk(texturePath, assets).also { textures[texturePath] = it }
+
                 data.add(RenderData(plane.targetName, model, texture, plane.scale, plane.rotation))
 
                 withContext(Dispatchers.Main) {

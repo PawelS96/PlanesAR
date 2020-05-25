@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:orientation="vertical">
+
+    <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:orientation="vertical">
+
+        <Button
+                android:id="@+id/button_resume"
+                style="@style/RoundedButton.MainMenu"
+                android:text="@string/resume" />
+        <Button
+                android:id="@+id/button_change_sorting"
+                style="@style/RoundedButton.MainMenu"
+                android:text="@string/change_sort_mode" />
+        <Button
+                android:id="@+id/button_exit"
+                style="@style/RoundedButton.MainMenu"
+                android:text="@string/exit" />
+
+    </LinearLayout>
+</RelativeLayout>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:orientation="vertical"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content">
+
+    <androidx.cardview.widget.CardView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            app:cardCornerRadius="5dp"
+
+    >
+        <ImageView
+                android:id="@+id/target"
+                android:layout_width="100dp"
+                android:layout_height="100dp"/>
+
+    </androidx.cardview.widget.CardView>
+
+    <TextView
+            android:id="@+id/plane_name"
+            android:textColor="@color/colorAccent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:singleLine="false"
+            android:gravity="center_horizontal"
+    />
+    <TextView
+            android:id="@+id/plane_info"
+            android:textColor="@color/colorFont"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+    />
+
+</LinearLayout>

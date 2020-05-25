@@ -34,5 +34,23 @@
     <string name="menu_datasets">DATASETS</string>
     <string name="menu_versions">VERSIONS</string>
     <string name="menu_camera">CAMERA</string>
+    <string name="mode_free">TRYB DOWOLNY</string>
+    <string name="mode_random">TRYB LOSOWY</string>
+    <string name="game_rules">ZASADY GRY</string>
+    <string name="exit">WYJŚCIE</string>
+    <string name="loading">Wczytywanie</string>
+    <string name="game_rules_description">- przed rozpoczęciem rozgrywki przygotuj znaczniki\n- skieruj kamerę na
+        znaczniki\n- ustaw samoloty według podanej kolejności
+    </string>
+    <string name="game_modes">Tryby gry</string>
+    <string name="game_modes_description">Tryb dowolny - możesz wybrać sposób układania samolotów i w dowolnej chwili go
+        zmienić\n\nTryb losowy - sposób układania samolotów jest wybierany losowo przed rozpoczęciem poziomu
+    </string>
+    <string name="ok">OK</string>
+    <string name="change_sort_mode">ZMIEŃ TRYB UKŁADANIA</string>
+    <string name="resume">POWRÓT</string>
+    <string name="select_sort_mode">Wybierz sposób układania samolotów</string>
+    <string name="keep_playing">GRAJ DALEJ</string>
+    <string name="victory">ZWYCIĘSTWO!</string>
 
 </resources>

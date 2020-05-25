@@ -10,6 +10,7 @@ data class Plane(
         val textureFilename: String,
         val targetName: String,
 
+        val fullName: String,
         val productionYear: Int,
         val topSpeed: Int,
         val country: String,
