@@ -34,7 +34,6 @@ import com.vuforia.*
 import com.vuforia.artest.R
 import kotlinx.android.synthetic.main.bottom_bar.view.*
 import kotlinx.android.synthetic.main.camera_overlay.*
-import kotlinx.android.synthetic.main.dialog_seekbars.view.*
 import kotlinx.android.synthetic.main.loading_screen.*
 import kotlinx.android.synthetic.main.main_layout.*
 import java.lang.ref.WeakReference
