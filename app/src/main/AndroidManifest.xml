@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.vuforia.artest">
+        xmlns:tools="http://schemas.android.com/tools"
+        package="com.vuforia.artest">
 
     <uses-feature android:glEsVersion="0x00020000"/>
 
@@ -48,7 +49,8 @@
                 android:name="com.pollub.samoloty.ui.CameraActivity"
                 android:theme="@style/AppTheme"
                 android:launchMode="singleTask"
-                android:screenOrientation="landscape">
+                android:screenOrientation="landscape"
+                tools:ignore="LockedOrientationActivity">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

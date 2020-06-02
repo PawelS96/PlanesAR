@@ -55,8 +55,8 @@ class VictoryDialog : DialogFragment() {
         val root = View.inflate(context!!, R.layout.dialog_victory, null)
         root.button_exit.setOnClickListener { callback.onExit() }
         root.button_play_again.setOnClickListener {
-            callback.onPlayAgain()
             dismiss()
+            callback.onPlayAgain()
         }
         root.recycler.adapter = PlaneAdapter(GameManager.getCorrectOrder(), GameManager.sortMode)
 

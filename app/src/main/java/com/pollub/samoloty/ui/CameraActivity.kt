@@ -2,7 +2,6 @@ package com.pollub.samoloty.ui
 
 import android.Manifest
 import android.app.AlertDialog
-import android.app.Dialog
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -10,10 +9,12 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
-import android.view.*
+import android.view.GestureDetector
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams
 import android.widget.RelativeLayout
-import android.widget.SeekBar
 import android.widget.Switch
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -451,6 +452,7 @@ class CameraActivity : AppCompatActivity(), Control,
                     }
                     UiState.STATE_GAMEPLAY -> {
                         hideGameplayUI()
+                        checkOrderHandler.removeCallbacks(checkOrder)
                         frame.removeAllViews()
                         showMainMenu(true)
                     }

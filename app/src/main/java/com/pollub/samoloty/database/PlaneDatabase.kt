@@ -14,6 +14,10 @@ abstract class PlaneDatabase : RoomDatabase() {
 
         planeDAO().clear()
 
+      //  rok: T6 STUKA SPITFIRE ARSENAL P39
+      //  kraj: ARSENAL STUKA  T6 P39 SPITFIRE
+        //speed:  T6 stuka arsenal spitfire p39
+
         planeDAO().insert(
 
                 //jak się nie wyświetla albo telepie można kombinowac z size w PlanesDatabase.xml

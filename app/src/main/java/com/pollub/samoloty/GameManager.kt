@@ -1,5 +1,6 @@
 package com.pollub.samoloty
 
+import android.util.Log
 import com.pollub.samoloty.database.Plane
 import java.io.Serializable
 import kotlin.random.Random
@@ -54,7 +55,7 @@ object GameManager {
                 countries == countries.sorted()
             }
             else -> checkOrderByNumber(planes, sortMode)
-        }
+        }.also { Log.d("orderCorrect", it.toString()) }
     }
 
     private fun checkOrderByNumber(planes: List<Plane>, mode: SortMode): Boolean {
