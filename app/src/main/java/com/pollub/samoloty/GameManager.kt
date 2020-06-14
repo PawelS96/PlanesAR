@@ -108,13 +108,4 @@ fun SortMode.displayName(): String {
     }
 }
 
-fun SortMode.objective(): String {
-
-    return when (this) {
-        SortMode.SORT_YEAR -> "Ustaw samoloty według roku początku produkcji"
-        SortMode.SORT_SPEED -> "Ustaw samoloty według prędkości maksymalnej"
-        SortMode.SORT_COUNTRY -> "Ustaw samoloty według kraju pochodzenia"
-        SortMode.SORT_CREW -> "Ustaw samoloty według liczby załogi"
-        SortMode.SORT_WEIGHT -> "Ustaw samoloty według masy startowej"
-    }
-}
+fun SortMode.objective(): String = "Ustaw samoloty " + displayName().toLowerCase()
