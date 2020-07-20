@@ -1,4 +1,4 @@
-# SamolotyAR
+# PlanesAR
 
 An Android game made using the augmented reality technology. The player's task is to place plane models in the correct order, for example by year of production or maximum speed.
 
